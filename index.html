@@ -284,7 +284,12 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
 
     <div class="benef">
       <div class="bgrid" style="grid-template-columns:1fr;padding:12px 0">
-        <label for="b-ref"><span class="label">¿Quién te recomendó?</span><input id="b-ref" autocomplete="off" placeholder="Nombre de quien te recomendó"></label>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="label">¿Vienes recomendado?</span>
+          <div class="seg2" role="group" aria-label="¿Vienes recomendado?"><button type="button" id="ref-yes" aria-pressed="true">Sí</button><button type="button" id="ref-no" aria-pressed="false">No</button></div>
+        </div>
+        <label for="b-ref" id="ref-box"><span class="label">¿Quién te recomendó?</span><input id="b-ref" autocomplete="off" placeholder="Nombre de quien te recomendó"></label>
+        <p id="ref-info" hidden style="margin:0;font-size:.84rem;color:var(--on-note-dim)"><b style="color:var(--gold)">Trabajamos por recomendación.</b> Si nadie te recomendó, por WhatsApp te pediremos información adicional para verificarte: nombre completo, documento de identidad, país desde donde envías y cómo nos conociste.</p>
       </div>
     </div>
 
@@ -537,9 +542,23 @@ function quote(c, send){
   const amt = send > 0 ? ` ${fmt(send, decOf(c))}` : "";
   let s = `Hola, ${greet()}. Quiero cambiar${amt} ${CUR_TXT[c.id] || c.cur}${payIn === "usdt" ? " a USDT" : ""}. Ya vi la cotización a través de la web, ¿me podrías enviar la cuenta?`;
   const ref = $("b-ref").value.trim();
-  if (ref) s += ` Vengo referido de ${ref}.`;
+  if (!referred) s += " No vengo referido; te envío la información adicional para verificarme.";
+  else if (ref) s += ` Vengo referido de ${ref}.`;
   return s;
 }
+/* Trabajamos por recomendación: sin referido, el cliente debe enviar datos para verificarlo */
+let referred = true;
+function setRef(v){
+  referred = v;
+  $("ref-yes").setAttribute("aria-pressed", v); $("ref-no").setAttribute("aria-pressed", !v);
+  $("ref-box").hidden = !v; $("ref-info").hidden = v;
+  update();
+}
+$("ref-yes").addEventListener("click", () => setRef(true));
+$("ref-no").addEventListener("click", () => setRef(false));
+$("wa").addEventListener("click", e => {
+  if (referred && !$("b-ref").value.trim()) { e.preventDefault(); $("b-ref").focus(); toast("Escribe quién te recomendó o marca “No”"); }
+});
 function renderRates(){
   $("rates").innerHTML = corr.map((c, i) => `<button class="rate" type="button" data-id="${c.id}" style="--i:${i}">
     <span class="flag">${FLAGS[c.id]}</span>

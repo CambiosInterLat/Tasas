@@ -51,6 +51,12 @@ textarea{width:100%;min-height:110px;font:inherit;font-size:.84rem;color:var(--i
   <h2>Videos de la semana</h2>
   <p class="note">Publica uno el lunes y otro el jueves. El video se graba en este teléfono o PC con las tasas del momento (12 segundos).</p>
   <div class="grid" id="videos"></div>
+  <h2>Plantillas para personalizar</h2>
+  <p class="note">Úsalas en la historia destacada "Envíos ✅" y para testimonios. Escribe los datos y se actualiza sola. Nunca pongas nombres completos ni cuentas.</p>
+  <div class="grid" id="custom"></div>
+  <h2>Kit de textos</h2>
+  <p class="note">Copia y pega en Instagram, WhatsApp Business, Google y grupos de Facebook.</p>
+  <div class="grid" id="kit"></div>
   <h2>Mensaje para lista de difusión de WhatsApp</h2>
   <div class="item"><textarea id="wa-text" readonly></textarea><div class="row"><button class="primary" id="wa-copy">Copiar mensaje</button></div></div>
 </main>
@@ -101,7 +107,8 @@ const unitTxt = c => `${c.unit === 1 ? "1" : fmt(c.unit,0)} ${c.cur}`;
 
 /* Día en hora de Venezuela: decide qué contenido toca */
 const now = new Date();
-const dayIdx = Math.floor((Date.now() - 4*3600e3)/864e5);
+/* ?d=1 muestra el contenido de mañana, ?d=2 pasado mañana, etc. */
+const dayIdx = Math.floor((Date.now() - 4*3600e3)/864e5) + (parseInt(new URLSearchParams(location.search).get("d"), 10) || 0);
 const dateTxt = now.toLocaleDateString("es-VE",{weekday:"long", day:"numeric", month:"long"});
 const dateCap = dateTxt.charAt(0).toUpperCase() + dateTxt.slice(1);
 const stamp = new Date(Date.now() - 4*3600e3).toISOString().slice(0,10);
@@ -231,8 +238,9 @@ function exampleStory(id){
     footer(g, w, h);
   };
 }
-function stepsArt(g, w, y0, gap){
-  [["1","Calcula en la web","Elige país y monto."],["2","Escríbenos por WhatsApp","Te enviamos la cuenta del día."],["3","Paga y envía el comprobante","Tu familiar recibe sus Bs."]].forEach(([n,t,s], i) => {
+const REFER_STEPS = [["1","Comparte nuestra web","Desde el botón Recomendar de la página."],["2","Tu amigo dice tu nombre","Al escribirnos por WhatsApp."],["3","Ganas mejor tasa","En tu próximo envío, por cada amigo."]];
+function stepsArt(g, w, y0, gap, items = [["1","Calcula en la web","Elige país y monto."],["2","Escríbenos por WhatsApp","Te enviamos la cuenta del día."],["3","Paga y envía el comprobante","Tu familiar recibe sus Bs."]]){
+  items.forEach(([n,t,s], i) => {
     const y = y0 + i*gap;
     g.fillStyle = COL.gold; g.beginPath(); g.arc(150, y, 54, 0, Math.PI*2); g.fill();
     txt(g, n, 150, y + 20, 56, {font:FD, weight:900, color:"#2A1D00", align:"center"});
@@ -287,11 +295,16 @@ const THIRD = [
   () => ({name:"Por referencia", draw: questionStory("Trabajamos solo por referencia. ¿Quién te recomendó?", "PREGUNTAS", (g, w, h, y) => {
       txt(g, "Así te cuidamos de estafas en redes.", w/2, y + 110, 34, {color:COL.dim, align:"center"}); }),
     how:"Agrega el sticker <b>PREGUNTAS</b> o <b>MENCIONAR</b> para que etiqueten a quien los recomendó."}),
-  () => ({name:"Ejemplo PayPal", draw: exampleStory("pp"), how:"Agrega el sticker <b>ENLACE</b> con la web: https://" + WEB + "/"})
+  () => ({name:"Ejemplo PayPal", draw: exampleStory("pp"), how:"Agrega el sticker <b>ENLACE</b> con la web: https://" + WEB + "/"}),
+  () => ({name:"Recomienda y gana", draw: (g, w, h) => { bg(g, w, h); header(g, w, 90);
+      txt(g, "RECOMIENDA", 78, 380, 110, {font:FD, weight:900, max:w - 156}); txt(g, "Y GANA", 78, 490, 110, {font:FD, weight:900, color:COL.gold});
+      wrap(g, "Por cada amigo que haga su primer envío, tú recibes tasa preferencial.", 78, 620, w - 156, 46, 60, {font:FB, weight:700, color:COL.dim});
+      stepsArt(g, w, 900, 230, REFER_STEPS); footer(g, w, h); },
+    how:"Agrega el sticker <b>MENCIONAR</b> («Etiqueta a quien le enviarías dinero») o <b>ENLACE</b> a la web."})
 ];
 
 /* Banco del feed (4:5) con texto para la publicación */
-const TAGS = "#EnviosAVenezuela #RemesasVenezuela #Venezuela #Maturin #Bolivares #CambioDeDivisas #InterLat";
+const TAGS = "#EnviosAVenezuela #RemesasVenezuela #VenezolanosEnChile #VenezolanosEnColombia #VenezolanosEnBrasil #Venezuela #Maturin #Bolivares #InterLat";
 const FEED = [
   () => ({name:"Tasas del día", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60); txt(g, "TASAS DEL DÍA", 78, 290, 76, {font:FD, weight:900}); txt(g, dateCap, 78, 340, 32, {weight:700, color:COL.gold});
       const end = rateCard(g, 50, 380, w - 100, 172); warn(g, w/2, end + 30); footer(g, w, h); },
@@ -327,6 +340,19 @@ const FEED = [
         txt(g, t, 100, y + 82, 50, {font:FD, weight:900, color:COL.gold}); txt(g, s, 100, y + 140, 32, {color:COL.dim, max:w - 200}); });
       footer(g, w, h); },
     cap:`¿Por qué enviar con InterLat? 🇻🇪\n\n✅ Confianza: trabajamos solo por referencia.\n⚡ Rapidez: tu familiar recibe el mismo día.\n🤝 Responsabilidad: te confirmamos cada paso por WhatsApp.\n\n📲 ${WA}\n\n${TAGS}`}),
+  () => ({name:"Recomienda y gana", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60);
+      txt(g, "RECOMIENDA Y GANA", 78, 300, 80, {font:FD, weight:900, max:w - 156});
+      txt(g, "Mejor tasa por cada amigo que traigas", 78, 370, 40, {weight:700, color:COL.gold, max:w - 156});
+      stepsArt(g, w, 520, 200, REFER_STEPS); footer(g, w, h); },
+    cap:`🎁 Recomienda InterLat y gana\n\nPor cada amigo que nos recomiendes y haga su primer envío a Venezuela, tú recibes tasa preferencial en tu próximo envío.\n\n1️⃣ Comparte nuestra web (botón "Recomendar por WhatsApp").\n2️⃣ Tu amigo dice tu nombre al escribirnos.\n3️⃣ Tu próximo envío sale con mejor tasa.\n\nTrabajamos solo por recomendación 💚\n📲 ${WA}\n\n${TAGS}`}),
+  () => ({name:"3 estafas comunes", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60);
+      txt(g, "3 ESTAFAS COMUNES", 78, 300, 78, {font:FD, weight:900, max:w - 156});
+      [["Te escriben de otro número","Nuestro único WhatsApp es " + WA + "."],["Una tasa demasiado buena","Si nadie más la da, desconfía."],["Pagar a una cuenta vieja","Confirma la cuenta antes de cada pago."]].forEach(([t,s], i) => {
+        const y = 400 + i*230; g.fillStyle = COL.card; g.fill(rr(50, y, w - 100, 200, 34));
+        txt(g, String(i + 1), 110, y + 120, 90, {font:FD, weight:900, color:COL.gold, align:"center"});
+        txt(g, t, 180, y + 88, 44, {font:FD, weight:800, max:w - 260}); txt(g, s, 180, y + 144, 30, {color:COL.dim, max:w - 260}); });
+      footer(g, w, h); },
+    cap:`🚨 3 estafas comunes al enviar dinero a Venezuela\n\n1️⃣ Te escriben "de parte de la casa de cambio" desde otro número. Nuestro único WhatsApp es ${WA}.\n2️⃣ Te ofrecen una tasa demasiado buena. Si nadie más la da, desconfía.\n3️⃣ Pagas a una cuenta vieja. Las cuentas cambian: confirma SIEMPRE antes de pagar.\n\nGuarda este post y compártelo con tu familia 💚\n\n${TAGS}`}),
   () => ({name:"BCV y USDT", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60); txt(g, "EL DÓLAR HOY", 78, 300, 84, {font:FD, weight:900}); brecha(g, w, 440); footer(g, w, h); },
     cap:`El dólar hoy en Venezuela 🇻🇪\n\nBCV: ${fmt(D.bcv)} Bs\nUSDT: ${fmt(D.usdt)} Bs\n\nCon nosotros tu familiar recibe a tasa de mercado. Calcula tu envío en la web (link en la bio).\n\n${TAGS}`})
 ];
@@ -448,6 +474,87 @@ const waTxt = [`*InterLat · Tasas del día* 🇻🇪`, dateCap, "",
   "", "🧮 Calcula tu envío: https://" + WEB + "/", "⚠️ *Siempre consulta la cuenta antes de pagar.*", "📲 " + WA].join("\n");
 $("wa-text").value = waTxt;
 $("wa-copy").onclick = () => copy(waTxt, "Mensaje copiado");
+
+/* ---------- Plantillas con datos que escribe el dueño ---------- */
+function star(g, cx, cy, r){ g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI/2 + i*Math.PI/5, rr2 = i % 2 ? r*0.45 : r; g.lineTo(cx + rr2*Math.cos(a), cy + rr2*Math.sin(a)); } g.closePath(); g.fill(); }
+const CUSTOM = [
+  {name:"Envío completado", tag:"Historia · Envíos ✅", file:"envio-completado", w:1080, h:1920,
+   fields:[["pais","País de origen","Chile"],["monto","Envió","10.000 CLP"],["recibe","Recibió en Venezuela","8.712,10 Bs"],["tiempo","Tiempo de entrega","15 minutos"]],
+   how:"Súbela a la historia destacada <b>Envíos ✅</b>. Si quieres, agrega encima la captura del pago con los datos tapados.",
+   draw(g, w, h, v){
+     bg(g, w, h); header(g, w, 90);
+     g.fillStyle = COL.gold; g.beginPath(); g.arc(w/2, 470, 110, 0, Math.PI*2); g.fill();
+     g.strokeStyle = "#2A1D00"; g.lineWidth = 22; g.lineCap = "round"; g.lineJoin = "round"; g.beginPath(); g.moveTo(w/2 - 50, 470); g.lineTo(w/2 - 10, 512); g.lineTo(w/2 + 55, 428); g.stroke();
+     txt(g, "ENVÍO COMPLETADO", w/2, 690, 86, {font:FD, weight:900, align:"center", max:w - 120});
+     g.fillStyle = COL.card; g.fill(rr(50, 760, w - 100, 600, 44));
+     [["Desde", v.pais], ["Envió", v.monto], ["Recibió en Venezuela", v.recibe], ["Llegó en", v.tiempo]].forEach(([k, val], i) => {
+       const y = 760 + 40 + i*140;
+       if (i) { g.fillStyle = COL.line; g.fillRect(90, y - 20, w - 180, 2); }
+       txt(g, k, 100, y + 50, 32, {color:COL.dim});
+       txt(g, val || "—", w - 100, y + 56, 48, {font: i === 2 ? FM : FD, weight: i === 2 ? 500 : 800, color: i === 2 ? COL.gold : COL.white, align:"right", max:w - 480});
+     });
+     txt(g, "Gracias por confiar en nosotros", w/2, 1480, 44, {font:FD, weight:800, align:"center", max:w - 120});
+     warn(g, w/2, 1540); footer(g, w, h);
+   }},
+  {name:"Testimonio de cliente", tag:"Historia o feed · testimonio", file:"testimonio", w:1080, h:1350,
+   fields:[["texto","Lo que dijo el cliente","Rápidos y serios. Mi mamá recibió en 15 minutos."],["quien","Iniciales","M. P."],["desde","Desde","Chile"]],
+   how:"Pide permiso al cliente antes de publicar. Usa solo iniciales.",
+   draw(g, w, h, v){
+     bg(g, w, h); header(g, w, 60);
+     txt(g, "LO QUE DICEN", 78, 290, 80, {font:FD, weight:900}); txt(g, "NUESTROS CLIENTES", 78, 370, 56, {font:FD, weight:900, color:COL.gold});
+     g.fillStyle = COL.card; g.fill(rr(50, 430, w - 100, 640, 44));
+     txt(g, "“", 110, 640, 260, {font:FD, weight:900, color:"rgba(242,194,48,.35)"});
+     wrap(g, v.texto || "", w/2, 620, w - 240, 54, 70, {align:"center", weight:800});
+     g.fillStyle = COL.gold; for (let i = 0; i < 5; i++) star(g, w/2 - 120 + i*60, 940, 24);
+     txt(g, `${v.quien || ""}${v.desde ? " · desde " + v.desde : ""}`, w/2, 1020, 36, {weight:700, color:COL.dim, align:"center", max:w - 200});
+     footer(g, w, h);
+   }}
+];
+CUSTOM.forEach(t => {
+  const el = document.createElement("div"); el.className = "item";
+  el.innerHTML = `<span class="tag">${t.tag}</span><h3>${t.name}</h3>`;
+  const cv = document.createElement("canvas"); cv.width = t.w; cv.height = t.h; const g = cv.getContext("2d");
+  const vals = Object.fromEntries(t.fields.map(([k,,d]) => [k, d]));
+  const redraw = () => t.draw(g, t.w, t.h, vals);
+  t.fields.forEach(([k, label, d]) => {
+    const lab = document.createElement("label"); lab.className = "note"; lab.style.display = "flex"; lab.style.flexDirection = "column"; lab.style.gap = "3px";
+    lab.innerHTML = `<b>${label}</b>`;
+    const inp = document.createElement(k === "texto" ? "textarea" : "input"); inp.value = d;
+    if (k === "texto") inp.style.minHeight = "70px"; else Object.assign(inp.style, {font:"inherit", padding:"8px 10px", borderRadius:"10px", border:"1px solid var(--line)", background:"var(--bg)", color:"var(--ink)"});
+    inp.addEventListener("input", () => { vals[k] = inp.value; redraw(); });
+    lab.appendChild(inp); el.appendChild(lab);
+  });
+  el.appendChild(cv); redraw();
+  el.insertAdjacentHTML("beforeend", `<p class="note">${t.how}</p>`);
+  const row = document.createElement("div"); row.className = "row";
+  const b = document.createElement("button"); b.className = "primary"; b.textContent = "Compartir / descargar";
+  b.onclick = async () => share(await blobOf(cv), `interlat-${stamp}-${t.file}.png`);
+  row.appendChild(b); el.appendChild(row); $("custom").appendChild(el);
+});
+
+/* ---------- Kit de textos ---------- */
+const SITE = "https://" + WEB + "/", HRS = "Lunes a sábado, 9 am a 10 pm";
+const KIT = [
+  ["Bio de Instagram", `💸 Envíos a Venezuela desde 🇨🇴 🇨🇱 🇧🇷 y PayPal\n✅ Solo por recomendación · Pago móvil y USDT\n📲 WhatsApp ${WA}\n🧮 Calcula tu envío 👇`, "Pega la web en el campo «Enlaces» del perfil."],
+  ["Historias destacadas", "Tasas · Cómo enviar · Envíos ✅ · Seguridad · Preguntas · Referidos", "Una portada por destacada con el logo y fondo verde."],
+  ["WhatsApp Business · saludo", `¡Hola! 👋 Gracias por escribir a InterLat.\n\nTrabajamos solo por recomendación: dinos quién te recomendó.\nSi nadie te recomendó, envíanos: nombre completo, documento de identidad, país desde donde envías y cómo nos conociste.\n\n🧮 Calcula tu envío: ${SITE}\n⚠️ Siempre consulta la cuenta antes de pagar.`, "WhatsApp Business → Herramientas → Mensaje de bienvenida."],
+  ["WhatsApp Business · ausencia", `Gracias por escribir a InterLat 💚 Ahora estamos fuera de horario (${HRS}). Te respondemos apenas abramos.\n\nMientras tanto, calcula tu envío: ${SITE}`, "Herramientas → Mensaje de ausencia → Fuera del horario comercial."],
+  ["Respuesta rápida /cuenta", "Te paso la cuenta del día 👇 Recuerda: las cuentas cambian, confirma siempre antes de cada pago.\n\nCuando pagues, envíame el comprobante y los datos del beneficiario: nombre, cédula, banco y teléfono de pago móvil.", "Herramientas → Respuestas rápidas → atajo /cuenta."],
+  ["Respuesta rápida /listo", "✅ ¡Listo! Tu envío fue pagado. Te comparto el comprobante.\n\nGracias por confiar en InterLat 💚 Si nos recomiendas a un amigo y hace su primer envío, tu próximo envío sale con mejor tasa.", "Atajo /listo, después de pagar al beneficiario."],
+  ["Canal de WhatsApp · descripción", `Tasas del día de InterLat para enviar a Venezuela 🇻🇪 desde Colombia, Chile, Brasil y PayPal. Publicamos la tasa cada mañana.\n🧮 ${SITE}\n📲 ${WA}`, "WhatsApp → Novedades → Canales → Crear canal. Publica ahí la Historia 1 cada día."],
+  ["Google Business · descripción", `InterLat es una casa de cambio en Maturín especializada en envíos de dinero a Venezuela desde Colombia, Chile, Brasil y PayPal. Pagamos en bolívares por pago móvil o transferencia a cualquier banco, o en USDT. Trabajamos por recomendación para cuidar a nuestros clientes de estafas. Calcula cuánto recibe tu familiar en nuestra web y solicita tu cuenta por WhatsApp. Siempre consulta la cuenta antes de pagar.`, "business.google.com → categoría «Servicio de transferencia de dinero». Pide reseñas a clientes contentos."],
+  ["Grupos de Facebook", `¿Le envías dinero a tu familia en Venezuela? 🇻🇪\n\nTe dejo 3 consejos para no caer en estafas:\n1. Confirma la cuenta antes de cada pago, siempre.\n2. Desconfía de tasas demasiado buenas.\n3. Si te escriben «de parte de» una casa de cambio desde otro número, verifica.\n\nEn InterLat trabajamos solo por recomendación. Puedes calcular cuánto recibe tu familiar aquí: ${SITE}`, "Lee las reglas de cada grupo antes de publicar. Primero aporta, luego ofrece."],
+  ["Horario para publicar", "Feed y reels: 6 pm a 9 pm (hora de Chile y Colombia, cuando salen del trabajo).\nHistorias: 8 am la de tasas, 1 pm la interactiva, 7 pm la tercera.", "Revisa Instagram → Estadísticas → Seguidores para ajustar."]
+];
+KIT.forEach(([t, s, n]) => {
+  const el = document.createElement("div"); el.className = "item";
+  el.innerHTML = `<h3>${t}</h3>`;
+  const ta = document.createElement("textarea"); ta.readOnly = true; ta.value = s; el.appendChild(ta);
+  el.insertAdjacentHTML("beforeend", `<p class="note">${n}</p>`);
+  const b = document.createElement("button"); b.textContent = "Copiar"; b.onclick = () => copy(s, "Copiado");
+  const row = document.createElement("div"); row.className = "row"; row.appendChild(b); el.appendChild(row);
+  $("kit").appendChild(el);
+});
 })();
 </script>
 </body></html>

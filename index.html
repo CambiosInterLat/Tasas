@@ -232,7 +232,7 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
 @media (prefers-reduced-motion: no-preference){.chip,.btn{transition:transform .12s, background .15s}.btn:active{transform:scale(.98)}}
 </style>
 
-<script id="rates-data" type="application/json">{"brand":"InterLat","whatsapp":"584249234587","hours":"","eta":"","updatedAt":1792200851680,"usdt":1003.39,"bcv":880.1159,"tierMin":1000,"paypalPct":5.4,"paypalFixed":0,"history":[{"d":"2026-10-16","usdt":1003.39,"bcv":880.12}],"corr":[{"id":"cop","cur":"COP","unit":1000,"rate":0.29102,"rateHigh":0.294051,"minLocal":3300000},{"id":"pp","cur":"USD","unit":1,"rate":910.345645,"rateHigh":920.349444,"minLocal":1000},{"id":"clp","cur":"CLP","unit":1000,"rate":0.939751,"rateHigh":0.949856,"minLocal":990000},{"id":"brl","cur":"BRL","unit":1,"rate":184.331024,"rateHigh":186.251139,"minLocal":5210},{"id":"usd","cur":"USD","unit":1,"rate":939.132085,"rateHigh":949.340043,"minLocal":980}]}</script>
+<script id="rates-data" type="application/json">{"brand":"InterLat","whatsapp":"584249234587","hours":"","eta":"","updatedAt":1792201424423,"usdt":1005.38,"bcv":880.1159,"tierMin":1000,"paypalPct":5.4,"paypalFixed":0,"history":[{"d":"2026-10-16","usdt":1003.39,"bcv":880.12}],"corr":[{"id":"cop","cur":"COP","unit":1000,"rate":0.291597,"rateHigh":0.294634,"minLocal":3300000},{"id":"pp","cur":"USD","unit":1,"rate":912.151113,"rateHigh":922.174751,"minLocal":1000},{"id":"clp","cur":"CLP","unit":1000,"rate":0.941615,"rateHigh":0.951739,"minLocal":990000},{"id":"brl","cur":"BRL","unit":1,"rate":184.696604,"rateHigh":186.620527,"minLocal":5210},{"id":"usd","cur":"USD","unit":1,"rate":940.994644,"rateHigh":951.222847,"minLocal":980}]}</script>
 
 <div class="wrap">
   <header>
@@ -345,7 +345,7 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
 <div class="toast" id="toast" hidden></div>
 
 <script>
-(() => {
+(async () => {
 const META = {
   cop:{name:"Colombia", flag:"🇨🇴", sub:"Pesos colombianos"},
   pp: {name:"PayPal",   flag:"💳", sub:"Dólares por PayPal"},
@@ -373,7 +373,35 @@ const FLAGS = (() => {
 })();
 let D;
 try { D = JSON.parse(document.getElementById("rates-data").textContent); } catch { D = {corr:[]}; }
-const corr = (D.corr || []).filter(c => c.rate > 0 && META[c.id]);
+/* Tasas en vivo: márgenes publicados desde el panel (config.json) × USDT de alcambio en este momento.
+   Si algo falla, se usan los datos guardados en la página. */
+async function liveData(D0){
+  const timeout = ms => new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms));
+  try {
+    const [cfg, api] = await Promise.race([Promise.all([
+      fetch("config.json?t=" + Date.now(), {cache: "no-store"}).then(r => { if (!r.ok) throw new Error("sin config"); return r.json(); }),
+      fetch("https://api.alcambio.app/graphql", {method: "POST", headers: {"content-type": "application/json"},
+        body: JSON.stringify({query: 'query { getBinanceP2PAverages { sellAverage updatedAt } getCountryConversions(payload:{countryCode:"VE"}) { conversionRates { baseValue official type rateCurrency { code } } } }'})})
+        .then(r => r.json()).catch(() => null)
+    ]), timeout(4500)]);
+    const p = api && api.data && api.data.getBinanceP2PAverages;
+    const rates = (api && api.data && api.data.getCountryConversions && api.data.getCountryConversions.conversionRates) || [];
+    const usd = rates.filter(x => x.official && x.rateCurrency && x.rateCurrency.code === "USD");
+    const b = usd.find(x => x.type === "SECONDARY") || usd[0];
+    const manual = cfg.rateMode === "manual" && +cfg.manualUsdt > 0;
+    const usdt = manual ? +cfg.manualUsdt : (p && +p.sellAverage > 0 ? +p.sellAverage : +cfg.lastUsdt || 0);
+    if (!(usdt > 0) || !Array.isArray(cfg.corr)) return D0;
+    return Object.assign({}, D0, {
+      brand: cfg.brand, whatsapp: cfg.whatsapp, hours: cfg.hours, eta: cfg.eta, tierMin: cfg.tierMin,
+      paypalPct: cfg.paypalPct, paypalFixed: cfg.paypalFixed, usdt,
+      bcv: b ? +b.baseValue : (+cfg.lastBcv || D0.bcv || 0),
+      updatedAt: manual ? cfg.updatedAt : ((p && +p.updatedAt) || cfg.updatedAt || Date.now()),
+      corr: cfg.corr.map(c => ({id: c.id, cur: c.cur, unit: c.unit, rate: usdt*c.k, rateHigh: usdt*c.kHigh, minLocal: c.minLocal}))
+    });
+  } catch { return D0; }
+}
+D = await liveData(D);
+const corr =(D.corr || []).filter(c => c.rate > 0 && META[c.id]);
 const $ = id => document.getElementById(id);
 const fmt = (n, d=2) => Number.isFinite(n) ? n.toLocaleString("es-VE",{minimumFractionDigits:d,maximumFractionDigits:d}) : "—";
 const decOf = c => (c.cur === "COP" || c.cur === "CLP") ? 0 : 2;
@@ -539,7 +567,7 @@ function renderMarket(){
     $("mk-vs").textContent = `Con nosotros, 1 $ desde ${META[u.id].name} = ${fmt(u.rate)} Bs: ${fmt((u.rate/bcv - 1)*100, 1)}% más que a tasa BCV.`;
   }
   const H = (D.history || []).filter(p => p.usdt > 0);
-  if (H.length < 2) { $("mk-chart").innerHTML = `<p class="small" style="margin:0;color:var(--muted);font-size:.8rem">El gráfico de 7 días se completa con las próximas actualizaciones.</p>`; return; }
+  if (H.length < 2) { $("mk-chart").innerHTML = ""; return; }
   const W = 480, Ht = 150, pl = 40, pr = 10, pt = 10, pb = 22;
   const all = H.flatMap(p => [p.usdt, p.bcv].filter(v => v > 0));
   let lo = Math.min(...all), hi = Math.max(...all); const pad = (hi - lo) * .15 || 10; lo -= pad; hi += pad;

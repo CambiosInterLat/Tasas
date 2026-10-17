@@ -309,6 +309,7 @@ $("m-man").addEventListener("click", () => { S.rateMode = "manual"; if (!S.manua
 $("publish").addEventListener("click", async () => {
   if (S.rateMode === "manual" && !(S.manualUsdt > 0)) { toast("Escribe la tasa manual antes de publicar"); return; }
   const btn = $("publish"); btn.disabled = true; $("st").innerHTML = "<b>Publicando…</b>";
+  if (!live.sell) await loadLive();
   try {
     const blob = await seal({token: TOKEN, settings: S}, PASS);
     await putText("secure.json", JSON.stringify(blob), "Ajustes cifrados del panel");
@@ -364,6 +365,7 @@ $("setup-form").addEventListener("submit", async e => {
     TOKEN = t; PASS = p1;
     await gh("index.html");
     const settings = clone(DEFAULTS);
+    await loadLive();
     await putText("secure.json", JSON.stringify(await seal({token:TOKEN, settings}, PASS)), "Crea acceso cifrado del panel");
     S = settings;
     await putText("config.json", JSON.stringify(buildConfig()), "Tasas iniciales");

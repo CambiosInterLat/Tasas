@@ -103,6 +103,7 @@ const hasTier = c => c.rateHigh > c.rate && c.minLocal > 0;
 const rateFor = (c, net) => hasTier(c) && net >= c.minLocal ? c.rateHigh : c.rate;
 const arrived = x => Math.max(0, x*(1-D.ppPct) - D.ppFix);
 const quoteBs = (c, A) => { const net = c.id === "pp" ? arrived(A) : A; return {net, bs: net*rateFor(c, net)}; };
+const ppTxt = () => `${fmt(D.ppPct*100,1)}%${D.ppFix ? ` + ${fmt(D.ppFix)} $` : ""}`;
 const unitTxt = c => `${c.unit === 1 ? "1" : fmt(c.unit,0)} ${c.cur}`;
 
 /* Día en hora de Venezuela: decide qué contenido toca */
@@ -228,7 +229,7 @@ function exampleStory(id){
     flag(g, c.id, 100, 510, 96);
     txt(g, "Envías desde " + META[c.id].name, 220, 572, 42, {font:FD, weight:800, max:w - 300});
     txt(g, `${fmt(A, decOf(c))} ${c.cur}`, w/2, 740, 110, {font:FM, weight:500, align:"center", max:w - 200});
-    if (c.id === "pp") txt(g, `Llegan a PayPal ${fmt(q.net)} $ (PayPal cobra ${fmt(D.ppPct*100,1)}%)`, w/2, 800, 28, {color:COL.dim, align:"center", max:w - 200});
+    if (c.id === "pp") txt(g, `Llegan a PayPal ${fmt(q.net)} $ (PayPal cobra ${ppTxt()})`, w/2, 800, 28, {color:COL.dim, align:"center", max:w - 200});
     txt(g, "Tu familiar recibe", w/2, 900, 36, {color:COL.dim, align:"center"});
     flag(g, "ve", w/2 - 48, 930, 96);
     txt(g, fmt(q.bs, 2) + " Bs", w/2, 1130, 108, {font:FM, weight:500, color:COL.gold, align:"center", max:w - 200});
@@ -344,7 +345,7 @@ const FEED = [
       txt(g, `SI ENVÍAS DESDE ${META[c.id].name.toUpperCase()}`, 78, 300, 64, {font:FD, weight:900, max:w - 156});
       g.fillStyle = COL.card; g.fill(rr(50, 360, w - 100, 640, 44)); flag(g, c.id, w/2 - 60, 400, 120);
       txt(g, `${fmt(A, decOf(c))} ${c.cur}`, w/2, 610, 100, {font:FM, weight:500, align:"center", max:w - 200});
-      txt(g, c.id === "pp" ? `llegan ${fmt(q.net)} $ (PayPal cobra ${fmt(D.ppPct*100,1)}%) y tu familiar recibe` : "tu familiar recibe", w/2, 700, 32, {color:COL.dim, align:"center", max:w - 180});
+      txt(g, c.id === "pp" ? `llegan ${fmt(q.net)} $ (PayPal cobra ${ppTxt()}) y tu familiar recibe` : "tu familiar recibe", w/2, 700, 32, {color:COL.dim, align:"center", max:w - 180});
       txt(g, fmt(q.bs) + " Bs", w/2, 850, 104, {font:FM, weight:500, color:COL.gold, align:"center", max:w - 200});
       txt(g, `Tasa de hoy: ${unitTxt(c)} = ${fmt(rateFor(c, q.net)*c.unit)} Bs`, w/2, 940, 30, {color:COL.dim, align:"center"}); warn(g, w/2, 1060); footer(g, w, h); },
       cap:`¿Cuánto recibe tu familiar hoy? 🇻🇪\n\nSi envías ${fmt(A, decOf(c))} ${META[c.id].long}, tu familiar recibe ${fmt(q.bs)} Bs.\n\nCalcula cualquier monto en nuestra web (link en la bio) y pide tu cuenta por WhatsApp ${WA}.\n⚠️ Siempre consulta la cuenta antes de pagar.\n\n${TAGS}`}; },

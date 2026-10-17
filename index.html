@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Calcula cu&aacute;ntos bol&iacute;vares recibe tu familiar en Venezuela. Env&iacute;os desde Colombia, Chile, Brasil, EE.UU. y PayPal."><meta property="og:title" content="InterLat &middot; Env&iacute;os a Venezuela"><meta property="og:description" content="Calcula cu&aacute;nto llega en bol&iacute;vares y solicita tu tasa por WhatsApp."><meta property="og:url" content="https://cambiosinterlat.github.io/Tasas/"><link rel="icon" type="image/png" href="favicon.png?v=2"><link rel="apple-touch-icon" href="logo.jpg?v=1"><meta property="og:image" content="https://cambiosinterlat.github.io/Tasas/logo.jpg"><meta name="theme-color" content="#118A44"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Envíos a Venezuela</title>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Calcula cu&aacute;ntos bol&iacute;vares recibe tu familiar en Venezuela. Env&iacute;os desde Colombia, Chile, Brasil y PayPal."><meta property="og:title" content="InterLat &middot; Env&iacute;os a Venezuela"><meta property="og:description" content="Calcula cu&aacute;nto llega en bol&iacute;vares y solicita tu tasa por WhatsApp."><meta property="og:url" content="https://cambiosinterlat.github.io/Tasas/"><link rel="icon" type="image/png" href="favicon.png?v=2"><link rel="apple-touch-icon" href="logo.jpg?v=1"><meta property="og:image" content="https://cambiosinterlat.github.io/Tasas/logo.jpg"><meta name="theme-color" content="#118A44"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Envíos a Venezuela</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,800;0,900;1,900&family=Manrope:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
@@ -364,23 +364,17 @@ const META = {
   cop:{name:"Colombia", flag:"🇨🇴", sub:"Pesos colombianos"},
   pp: {name:"PayPal",   flag:"💳", sub:"Dólares por PayPal"},
   clp:{name:"Chile",    flag:"🇨🇱", sub:"Pesos chilenos"},
-  brl:{name:"Brasil",   flag:"🇧🇷", sub:"Reales · Pix"},
-  usd:{name:"Estados Unidos", flag:"🇺🇸", sub:"Dólares · Zelle"}
+  brl:{name:"Brasil",   flag:"🇧🇷", sub:"Reales · Pix"}
 };
 /* Banderas dibujadas (Windows no muestra los emojis de banderas) */
 const FLAGS = (() => {
   const w = b => `<svg class="flg" viewBox="0 0 30 20" aria-hidden="true">${b}</svg>`;
-  let us = `<rect width="30" height="20" fill="#B22234"/>`;
-  for (let i = 1; i < 13; i += 2) us += `<rect y="${(i*20/13).toFixed(2)}" width="30" height="${(20/13).toFixed(2)}" fill="#fff"/>`;
-  us += `<rect width="12.4" height="${(7*20/13).toFixed(2)}" fill="#3C3B6E"/>`;
-  for (let r = 0; r < 4; r++) for (let c = 0; c < (r % 2 ? 4 : 5); c++) us += `<circle cx="${(1.4 + c*2.4 + (r%2)*1.2).toFixed(1)}" cy="${(1.5 + r*2.5).toFixed(1)}" r=".55" fill="#fff"/>`;
   let ve = `<rect width="30" height="6.7" fill="#FFCC00"/><rect y="6.6" width="30" height="6.8" fill="#00247D"/><rect y="13.3" width="30" height="6.7" fill="#CF142B"/>`;
   for (let k = 0; k < 8; k++) { const a = Math.PI*(1.12 + k*0.76/7); ve += `<circle cx="${(15 + 5.2*Math.cos(a)).toFixed(2)}" cy="${(14.6 + 5.2*Math.sin(a)).toFixed(2)}" r=".6" fill="#fff"/>`; }
   return {
     cop: w(`<rect width="30" height="10" fill="#FCD116"/><rect y="10" width="30" height="5" fill="#003893"/><rect y="15" width="30" height="5" fill="#CE1126"/>`),
     clp: w(`<rect width="30" height="20" fill="#fff"/><rect y="10" width="30" height="10" fill="#D52B1E"/><rect width="10" height="10" fill="#0039A6"/><path d="M5 2.4l.9 2.8h2.9L6.5 6.9l.9 2.8L5 8 2.6 9.7l.9-2.8-2.4-1.7h2.9z" fill="#fff"/>`),
     brl: w(`<rect width="30" height="20" fill="#009C3B"/><path d="M15 2.4 27.4 10 15 17.6 2.6 10z" fill="#FFDF00"/><circle cx="15" cy="10" r="4.6" fill="#002776"/><path d="M10.5 9.1c3-.9 6.4-.4 9 1.4" stroke="#fff" stroke-width=".8" fill="none"/>`),
-    usd: w(us),
     pp: w(`<rect width="30" height="20" fill="#003087"/><rect x="5" y="5" width="20" height="11" rx="2" fill="#0070E0"/><rect x="5" y="7.5" width="20" height="2.2" fill="#003087"/><rect x="8" y="12" width="6" height="1.6" rx=".8" fill="#fff"/>`),
     ve: w(ve)
   };
@@ -603,7 +597,7 @@ function renderMarket(){
   $("mk-bcv").textContent = fmt(bcv) + " Bs";
   $("mk-usdt").textContent = fmt(usdt) + " Bs";
   $("mk-gap").textContent = fmt((usdt/bcv - 1)*100, 1) + "%";
-  const u = corr.find(c => c.id === "usd") || corr.find(c => c.cur === "USD");
+  const u = corr.find(c => c.cur === "USD");
   if (u && u.rate > bcv) {
     $("mk-vs").hidden = false;
     $("mk-vs").textContent = `Con nosotros, 1 $ desde ${META[u.id].name} = ${fmt(u.rate)} Bs: ${fmt((u.rate/bcv - 1)*100, 1)}% más que a tasa BCV.`;

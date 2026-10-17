@@ -118,6 +118,9 @@ ol.how li::before{content:counter(s);width:30px;height:30px;border-radius:50%;ba
 ol.how b{display:block}
 ol.how span{font-size:.88rem;color:var(--muted)}
 .stale{background:var(--soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:.85rem;font-weight:600}
+.refer{gap:12px}
+.refer-in{display:flex;flex-direction:column;gap:4px}
+.refer-in input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
 .benef{position:relative;z-index:1;border:1px solid var(--field-line);border-radius:14px;padding:4px 14px}
 .benef summary{cursor:pointer;padding:10px 0;font-weight:600;font-size:.92rem;list-style:none}
 .benef summary::-webkit-details-marker{display:none}
@@ -306,6 +309,13 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
     <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><b>Sin comisiones ocultas</b></div>
   </section>
 
+  <section class="card refer">
+    <h2>Recomienda y gana</h2>
+    <p style="margin:0;color:var(--muted)">Trabajamos por recomendación. Por cada persona que nos recomiendes y haga su primer envío, <b style="color:var(--ink)">tú recibes una tasa preferencial en tu próximo envío</b>.</p>
+    <label for="sh-name" class="refer-in"><span class="label">Tu nombre (para que sepamos que vino de tu parte)</span><input id="sh-name" autocomplete="given-name" placeholder="Ej. Susej"></label>
+    <a class="btn wa" id="sh-wa" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Recomendar por WhatsApp</a>
+  </section>
+
   <section class="card" id="mkt" hidden>
     <h2>Dólar hoy en Venezuela</h2>
     <div class="mk">
@@ -334,7 +344,8 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
   <section class="card">
     <h2>Preguntas frecuentes</h2>
     <div class="faq">
-      <details><summary>¿Atienden clientes nuevos?</summary><p>Sí, por recomendación de un cliente actual. Indica quién te recomendó al escribirnos. Para tu seguridad y la nuestra, a clientes nuevos podemos pedir requisitos adicionales.</p></details>
+      <details><summary>¿Atienden clientes nuevos?</summary><p>Sí, por recomendación de un cliente actual. Indica quién te recomendó al escribirnos. Si nadie te recomendó, te pediremos información adicional para verificarte: nombre completo, documento de identidad, país desde donde envías y cómo nos conociste.</p></details>
+      <details><summary>¿Gano algo por recomendar?</summary><p>Sí. Por cada persona que nos recomiendes y haga su primer envío, recibes una tasa preferencial en tu próximo envío. Pídele que diga tu nombre al escribirnos.</p></details>
       <details><summary>¿A qué cuenta pago?</summary><p>Siempre consulta la cuenta por WhatsApp antes de cada pago. Las cuentas pueden cambiar y no respondemos por pagos a cuentas no confirmadas.</p></details>
       <details><summary>¿Cuánto tarda en llegar?</summary><p id="faq-eta">Normalmente el mismo día, después de confirmar tu pago.</p></details>
       <details><summary>¿Qué datos necesito del beneficiario?</summary><p>Nombre completo, cédula, banco y teléfono afiliado a pago móvil. Para transferencia, el número de cuenta de 20 dígitos.</p></details>
@@ -572,6 +583,14 @@ if (eta) { $("eta-pill").hidden = false; $("eta-pill").textContent = eta; $("faq
 if (hours) { $("hours-pill").hidden = false; $("hours-pill").textContent = hours; }
 if (ppPct) $("faq-pp").textContent = `PayPal descuenta ${fmt(ppPct*100,1)}%${ppFix?` + ${fmt(ppFix)} $`:""} al enviar. Pagamos en bolívares según el monto que llega a nuestra cuenta.`;
 $("b-ref").addEventListener("input", update);
+/* Recomendar: abre WhatsApp para elegir un contacto, con el enlace y el nombre de quien recomienda */
+const shareMsg = () => {
+  const n = $("sh-name").value.trim();
+  return `Te recomiendo InterLat para enviar dinero a Venezuela 🇻🇪 Son serios y rápidos. Calcula cuánto recibe tu familiar aquí: ${location.origin + location.pathname}` +
+    (n ? `\nCuando les escribas, diles que vas de parte de ${n}.` : "\nCuando les escribas, diles que vas de mi parte.");
+};
+const setShare = () => $("sh-wa").href = "https://wa.me/?text=" + encodeURIComponent(shareMsg());
+$("sh-name").addEventListener("input", setShare); setShare();
 $("send").addEventListener("input", () => { lastEdited = "send"; update(); });
 $("recv").addEventListener("input", () => { lastEdited = "recv"; update(); });
 if (!corr.length) { $("rate-line").textContent = "Tasas no disponibles"; return; }

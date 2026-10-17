@@ -341,7 +341,9 @@ const VIDEOS = [
     txt(g, "TASAS DEL DÍA", 78, 380, 96, {font:FD, weight:900, max:w - 156}); txt(g, dateCap, 78, 440, 38, {weight:700, color:COL.gold}); g.restore();
     if (t > 1) { const end = rateCard(g, 50, 500, w - 100, 210, i => (t - 1.4 - i*0.6)/0.7, i => ease((t - 1.4 - i*0.6)/1.4));
       if (t > 4.6) { g.save(); g.globalAlpha = ease((t - 4.6)/0.6); warn(g, w/2, end + 50); g.restore(); } }
-    if (t > 7.5) { const z = ease((t - 7.5)/0.7); g.save(); g.globalAlpha = z; g.fillStyle = "rgba(8,17,31,.94)"; g.fillRect(0, 0, w, h);
+    /* Cierre: pantalla propia que tapa por completo las tasas (sin texto encimado) */
+    if (t > 7.5) { const z = ease((t - 7.5)/0.6); g.save(); g.globalAlpha = z; bg(g, w, h); header(g, w, 90);
+      g.globalAlpha = ease((t - 8)/0.6);
       txt(g, "Escríbenos por WhatsApp", w/2, 820, 58, {font:FD, weight:900, align:"center", max:w - 120});
       txt(g, WA, w/2, 920, 70, {font:FM, weight:500, color:COL.gold, align:"center"});
       txt(g, "Calcula tu envío en la web", w/2, 1080, 40, {weight:700, align:"center"});

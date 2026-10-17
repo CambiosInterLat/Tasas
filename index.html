@@ -282,18 +282,11 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
     </label>
     </div>
 
-    <details class="benef" id="benef">
-      <summary>Agregar datos del beneficiario <span>(opcional)</span></summary>
-      <div class="bgrid">
-        <label for="b-name"><span class="label">Nombre y apellido</span><input id="b-name" autocomplete="off"></label>
-        <label for="b-ci" class="bs-only"><span class="label">Cédula</span><input id="b-ci" inputmode="numeric" placeholder="V-12345678" autocomplete="off"></label>
-        <label for="b-bank" class="bs-only"><span class="label">Banco</span><input id="b-bank" list="banks" autocomplete="off"></label>
-        <label for="b-tel" class="bs-only"><span class="label">Teléfono pago móvil</span><input id="b-tel" inputmode="tel" placeholder="0414-1234567" autocomplete="off"></label>
-        <label for="b-wallet" id="b-wallet-l" style="grid-column:1/-1" hidden><span class="label">Binance Pay ID, correo o dirección USDT (TRC20 / BEP20)</span><input id="b-wallet" autocomplete="off"></label>
-        <label for="b-ref" style="grid-column:1/-1"><span class="label">¿Quién te recomendó? (clientes nuevos)</span><input id="b-ref" autocomplete="off" placeholder="Nombre de quien te recomendó"></label>
+    <div class="benef">
+      <div class="bgrid" style="grid-template-columns:1fr;padding:12px 0">
+        <label for="b-ref"><span class="label">¿Quién te recomendó?</span><input id="b-ref" autocomplete="off" placeholder="Nombre de quien te recomendó"></label>
       </div>
-      <datalist id="banks"><option value="Banco de Venezuela"><option value="Banesco"><option value="Mercantil"><option value="Provincial"><option value="Bancamiga"><option value="BNC"><option value="Banco del Tesoro"><option value="Bicentenario"><option value="Banplus"><option value="Venezolano de Crédito"></datalist>
-    </details>
+    </div>
 
     <div class="acct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
       <span><b>Siempre consulta la cuenta antes de pagar.</b> Las cuentas pueden cambiar. No pagues a una cuenta anterior sin confirmar.</span></div>
@@ -441,8 +434,6 @@ function setPay(v){
   payIn = v;
   $("pay-bs").setAttribute("aria-pressed", v === "bs"); $("pay-usdt").setAttribute("aria-pressed", v === "usdt");
   $("recv-cur").innerHTML = v === "usdt" ? `<span class="usdt-ico" aria-hidden="true">₮</span>USDT` : FLAGS.ve + "Bs";
-  document.querySelectorAll(".bs-only").forEach(el => el.hidden = v === "usdt");
-  $("b-wallet-l").hidden = v !== "usdt";
   lastEdited = "send"; animateNext = true; update();
 }
 if (usdtOK) {
@@ -536,25 +527,18 @@ function update(){
       <div class="arrive"><span>Llega a PayPal</span><span>${fmt(net)} $</span></div>
       <div><span>Recibe en Venezuela</span><span>${fmtOut(bs)} ${outU()}</span></div>`;
   } else st.hidden = true;
-  const msg = quote(c, send, net, bs);
+  const msg = quote(c, send);
   $("wa").href = waText(msg);
 }
-function quote(c, send, net, bs){
-  const m = META[c.id];
-  let s = `Hola ${brand || "InterLat"}, quiero enviar a Venezuela.\n${m.flag} Desde: ${m.name}\nEnvío: ${fmt(send, decOf(c))} ${c.cur}`;
-  if (c.id === "pp") s += `\nLlega a PayPal: ${fmt(net)} $`;
-  const r = net > 0 ? bs/net : c.rate;
-  s += payIn === "usdt"
-    ? `\nRecibe: ${fmtOut(bs)} USDT (equivale a ${fmt(bs)} Bs)`
-    : `\nRecibe: ${fmt(bs)} Bs`;
-  s += `\nTasa: ${c.unit===1?"1":fmt(c.unit,0)} ${c.cur} = ${fmtOut(r*c.unit)} ${outU()}${hasTier(c) && r === c.rateHigh ? " (preferencial)" : ""}`;
-  const fields = payIn === "usdt"
-    ? [["Beneficiario","b-name"],["Binance Pay / billetera USDT","b-wallet"],["Me recomendó","b-ref"]]
-    : [["Beneficiario","b-name"],["Cédula","b-ci"],["Banco","b-bank"],["Pago móvil","b-tel"],["Me recomendó","b-ref"]];
-  const b = fields
-    .map(([k,id]) => [k, $(id).value.trim()]).filter(([,v]) => v);
-  if (b.length) s += "\n\n" + b.map(([k,v]) => `${k}: ${v}`).join("\n");
-  return s + "\n\n¿Me confirmas la tasa y la cuenta para pagar?";
+/* Mensaje corto: saludo según la hora, monto, cotización vista en la web y quién lo refirió */
+const CUR_TXT = {cop:"pesos colombianos", clp:"pesos chilenos", brl:"reales", pp:"dólares por PayPal"};
+const greet = () => { const h = new Date().getHours(); return h < 12 ? "buenos días" : h < 19 ? "buenas tardes" : "buenas noches"; };
+function quote(c, send){
+  const amt = send > 0 ? ` ${fmt(send, decOf(c))}` : "";
+  let s = `Hola, ${greet()}. Quiero cambiar${amt} ${CUR_TXT[c.id] || c.cur}${payIn === "usdt" ? " a USDT" : ""}. Ya vi la cotización a través de la web, ¿me podrías enviar la cuenta?`;
+  const ref = $("b-ref").value.trim();
+  if (ref) s += ` Vengo referido de ${ref}.`;
+  return s;
 }
 function renderRates(){
   $("rates").innerHTML = corr.map((c, i) => `<button class="rate" type="button" data-id="${c.id}" style="--i:${i}">
@@ -568,7 +552,7 @@ const eta = String(D.eta || "").trim(), hours = String(D.hours || "").trim();
 if (eta) { $("eta-pill").hidden = false; $("eta-pill").textContent = eta; $("faq-eta").textContent = `Tiempo estimado: ${eta}, después de confirmar tu pago.`; }
 if (hours) { $("hours-pill").hidden = false; $("hours-pill").textContent = hours; }
 if (ppPct) $("faq-pp").textContent = `PayPal descuenta ${fmt(ppPct*100,1)}%${ppFix?` + ${fmt(ppFix)} $`:""} al enviar. Pagamos en bolívares según el monto que llega a nuestra cuenta.`;
-["b-name","b-ci","b-bank","b-tel","b-ref","b-wallet"].forEach(id => $(id).addEventListener("input", update));
+$("b-ref").addEventListener("input", update);
 $("send").addEventListener("input", () => { lastEdited = "send"; update(); });
 $("recv").addEventListener("input", () => { lastEdited = "recv"; update(); });
 if (!corr.length) { $("rate-line").textContent = "Tasas no disponibles"; return; }

@@ -168,20 +168,73 @@ header h1{font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:va
 .contact-bar a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .contact-bar svg{width:18px;height:18px}
 @media (max-width:420px){.contact-bar{border-radius:18px}}
+/* ---------- Movimiento y suavidad ---------- */
+html{scroll-behavior:smooth}
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+button,a{-webkit-tap-highlight-color:transparent}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes arrL{from{opacity:0;transform:translateX(34px)}to{opacity:1;transform:none}}
+@keyframes arrR{from{opacity:0;transform:translateX(-34px)}to{opacity:1;transform:none}}
+@keyframes sheen{0%{transform:translateX(-70%)}40%,100%{transform:translateX(70%)}}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(37,211,102,.55)}80%,100%{box-shadow:0 0 0 18px rgba(37,211,102,0)}}
+@keyframes rise{from{opacity:0;transform:translateY(34px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes draw{to{stroke-dashoffset:0}}
+header{animation:fadeUp .6s cubic-bezier(.2,.8,.2,1) both}
+.tagline{animation:fadeUp .6s .1s cubic-bezier(.2,.8,.2,1) both}
+.note{animation:fadeUp .7s .2s cubic-bezier(.2,.8,.2,1) both}
+.logo-wrap .arr-t{animation:arrL .9s .35s cubic-bezier(.2,.8,.2,1) both}
+.logo-wrap .arr-b{animation:arrR .9s .35s cubic-bezier(.2,.8,.2,1) both}
+.logo-wrap{transition:transform .25s}
+.logo-wrap:hover{transform:rotate(-1.5deg) scale(1.03)}
+.note::before{content:"";position:absolute;inset:-40% -60%;background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.09) 50%,transparent 58%);transform:translateX(-70%);animation:sheen 7s ease-in-out 1.5s infinite;pointer-events:none}
+.chip{transition:background .25s,color .25s,border-color .25s,transform .15s,box-shadow .25s}
+.chip:active{transform:scale(.94)}
+.chip[aria-pressed="true"]{box-shadow:0 8px 20px -8px rgba(0,0,0,.55)}
+.chev{transition:background .2s,transform .15s,opacity .2s}
+.chev:not(:disabled):hover{background:rgba(255,255,255,.22)}
+.chev:not(:disabled):active{transform:scale(.88)}
+.amt{transition:border-color .25s,background .25s,box-shadow .25s}
+.amt:focus-within{border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.17);box-shadow:0 0 0 4px rgba(242,194,48,.2)}
+.amt input:focus-visible{outline:none}
+.btn.wa{overflow:hidden;box-shadow:0 10px 24px -12px rgba(37,211,102,.8);transition:transform .15s,box-shadow .2s}
+.btn.wa::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-18deg);animation:sweep 4.5s ease-in-out 2s infinite}
+@keyframes sweep{0%{left:-60%}30%,100%{left:130%}}
+.btn.wa:hover{box-shadow:0 14px 30px -12px rgba(37,211,102,.9)}
+.fab{transition:transform .2s}
+.fab:hover{transform:scale(1.07)}
+.fab::after{content:"";position:absolute;inset:0;border-radius:50%;animation:ring 2.6s ease-out 1s infinite}
+.values div{transition:transform .2s,box-shadow .2s,border-color .2s}
+.values div:hover{transform:translateY(-3px);box-shadow:0 12px 24px -16px rgba(12,47,110,.5);border-color:var(--green)}
+.rate{transition:background .2s,padding .2s;border-radius:12px}
+.rate:hover{background:var(--soft);padding-inline:8px}
+.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-weight:700;font-size:1.3rem;color:var(--accent);transition:transform .3s cubic-bezier(.2,.8,.2,1);flex:none}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details[open] > p{animation:fadeDown .3s ease-out}
+.draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.6s .4s cubic-bezier(.4,0,.2,1) forwards}
+@supports (animation-timeline: view()) {
+  .wrap > section, .wrap > footer{animation:rise linear both;animation-timeline:view();animation-range:entry 0% entry 35%}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .draw{stroke-dashoffset:0}
+}
 footer{font-size:.78rem;color:var(--muted);text-align:center}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-weight:600;font-size:.9rem;z-index:5}
 @media (prefers-reduced-motion: no-preference){.chip,.btn{transition:transform .12s, background .15s}.btn:active{transform:scale(.98)}}
 </style>
 
-<script id="rates-data" type="application/json">{"brand":"InterLat","whatsapp":"584249234587","hours":"","eta":"","updatedAt":1792199051093,"usdt":1003.39,"bcv":880.1159,"tierMin":1000,"paypalPct":5.4,"paypalFixed":0,"history":[{"d":"2026-10-16","usdt":1003.39,"bcv":880.12}],"corr":[{"id":"cop","cur":"COP","unit":1000,"rate":0.29102,"rateHigh":0.294051,"minLocal":3300000},{"id":"pp","cur":"USD","unit":1,"rate":910.345645,"rateHigh":920.349444,"minLocal":1000},{"id":"clp","cur":"CLP","unit":1000,"rate":0.939751,"rateHigh":0.949856,"minLocal":990000},{"id":"brl","cur":"BRL","unit":1,"rate":184.331024,"rateHigh":186.251139,"minLocal":5210},{"id":"usd","cur":"USD","unit":1,"rate":939.132085,"rateHigh":949.340043,"minLocal":980}]}</script>
+<script id="rates-data" type="application/json">{"brand":"InterLat","whatsapp":"584249234587","hours":"","eta":"","updatedAt":1792199222568,"usdt":1003.39,"bcv":880.1159,"tierMin":1000,"paypalPct":5.4,"paypalFixed":0,"history":[{"d":"2026-10-16","usdt":1003.39,"bcv":880.12}],"corr":[{"id":"cop","cur":"COP","unit":1000,"rate":0.29102,"rateHigh":0.294051,"minLocal":3300000},{"id":"pp","cur":"USD","unit":1,"rate":910.345645,"rateHigh":920.349444,"minLocal":1000},{"id":"clp","cur":"CLP","unit":1000,"rate":0.939751,"rateHigh":0.949856,"minLocal":990000},{"id":"brl","cur":"BRL","unit":1,"rate":184.331024,"rateHigh":186.251139,"minLocal":5210},{"id":"usd","cur":"USD","unit":1,"rate":939.132085,"rateHigh":949.340043,"minLocal":980}]}</script>
 
 <div class="wrap">
   <header>
     <div class="logo-wrap" role="img" aria-label="InterLat">
       <svg viewBox="0 0 200 64" aria-hidden="true">
-        <path d="M44 10H170" stroke="#2DA84A" stroke-width="4" stroke-linecap="round"/><path d="M30 10l12-7v14z" fill="#2DA84A"/>
+        <g class="arr-t"><path d="M44 10H170" stroke="#2DA84A" stroke-width="4" stroke-linecap="round"/><path d="M30 10l12-7v14z" fill="#2DA84A"/></g>
         <text x="100" y="42" text-anchor="middle" font-family="Montserrat, 'Arial Black', sans-serif" font-weight="900" font-style="italic" font-size="31" letter-spacing="1" fill="#1B3A8A">INTERLAT</text>
-        <path d="M30 54H156" stroke="#2DA84A" stroke-width="4" stroke-linecap="round"/><path d="M170 54l-12-7v14z" fill="#2DA84A"/>
+        <g class="arr-b"><path d="M30 54H156" stroke="#2DA84A" stroke-width="4" stroke-linecap="round"/><path d="M170 54l-12-7v14z" fill="#2DA84A"/></g>
       </svg>
     </div>
     <div><h1 id="brand">Casa de Cambio &amp; Remesas</h1><p id="upd">Tasas de hoy</p>
@@ -495,8 +548,8 @@ function renderMarket(){
   const path = k => H.map((p,i) => p[k] > 0 ? `${i && H[i-1][k] > 0 ? "L" : "M"}${x(i).toFixed(1)},${y(p[k]).toFixed(1)}` : "").join("");
   let s = `<svg class="chart" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Dólar USDT y BCV, últimos días">`;
   [lo + (hi-lo)*.15, (lo+hi)/2, hi - (hi-lo)*.15].forEach(v => { s += `<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-dasharray="3 4"/><text x="${pl-6}" y="${y(v)+3}" text-anchor="end">${fmt(v,0)}</text>`; });
-  s += `<path d="${path("bcv")}" fill="none" stroke="var(--muted)" stroke-width="2"/>`;
-  s += `<path d="${path("usdt")}" fill="none" stroke="var(--gold)" stroke-width="2.5"/>`;
+  s += `<path pathLength="1" class="draw" d="${path("bcv")}" fill="none" stroke="var(--muted)" stroke-width="2"/>`;
+  s += `<path pathLength="1" class="draw" d="${path("usdt")}" fill="none" stroke="var(--gold)" stroke-width="2.5"/>`;
   H.forEach((p,i) => {
     const d = new Date(p.d + "T12:00:00");
     s += `<text x="${x(i)}" y="${Ht-6}" text-anchor="middle">${d.toLocaleDateString("es-VE",{day:"2-digit",month:"2-digit"})}</text>`;

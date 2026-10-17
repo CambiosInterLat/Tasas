@@ -146,7 +146,8 @@ ol.how span{font-size:.88rem;color:var(--muted)}
 .rate .v small.hi{color:var(--warn);font-weight:700}
 .mk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .mk div{background:var(--bg);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px;min-width:0}
-.mk .v{font-family:var(--f-mono);font-size:1.05rem;overflow-wrap:anywhere}
+.mk .v{font-family:var(--f-mono);font-size:clamp(.8rem,3.4vw,1.05rem);white-space:nowrap}
+@media (max-width:420px){.values b{font-size:.68rem;letter-spacing:0}.values div{padding:10px;gap:8px}.mk div{padding:9px 8px}}
 .vs{margin:0;font-size:.9rem;background:var(--soft);color:var(--accent);border-radius:12px;padding:10px 12px;font-weight:600}
 svg.chart{width:100%;height:auto;display:block}
 svg.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:10px}
@@ -226,7 +227,7 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
 @media (prefers-reduced-motion: no-preference){.chip,.btn{transition:transform .12s, background .15s}.btn:active{transform:scale(.98)}}
 </style>
 
-<script id="rates-data" type="application/json">{"brand":"InterLat","whatsapp":"584249234587","hours":"","eta":"","updatedAt":1792199222568,"usdt":1003.39,"bcv":880.1159,"tierMin":1000,"paypalPct":5.4,"paypalFixed":0,"history":[{"d":"2026-10-16","usdt":1003.39,"bcv":880.12}],"corr":[{"id":"cop","cur":"COP","unit":1000,"rate":0.29102,"rateHigh":0.294051,"minLocal":3300000},{"id":"pp","cur":"USD","unit":1,"rate":910.345645,"rateHigh":920.349444,"minLocal":1000},{"id":"clp","cur":"CLP","unit":1000,"rate":0.939751,"rateHigh":0.949856,"minLocal":990000},{"id":"brl","cur":"BRL","unit":1,"rate":184.331024,"rateHigh":186.251139,"minLocal":5210},{"id":"usd","cur":"USD","unit":1,"rate":939.132085,"rateHigh":949.340043,"minLocal":980}]}</script>
+<script id="rates-data" type="application/json">{"brand":"InterLat","whatsapp":"584249234587","hours":"","eta":"","updatedAt":1792199295291,"usdt":1003.39,"bcv":880.1159,"tierMin":1000,"paypalPct":5.4,"paypalFixed":0,"history":[{"d":"2026-10-16","usdt":1003.39,"bcv":880.12}],"corr":[{"id":"cop","cur":"COP","unit":1000,"rate":0.29102,"rateHigh":0.294051,"minLocal":3300000},{"id":"pp","cur":"USD","unit":1,"rate":910.345645,"rateHigh":920.349444,"minLocal":1000},{"id":"clp","cur":"CLP","unit":1000,"rate":0.939751,"rateHigh":0.949856,"minLocal":990000},{"id":"brl","cur":"BRL","unit":1,"rate":184.331024,"rateHigh":186.251139,"minLocal":5210},{"id":"usd","cur":"USD","unit":1,"rate":939.132085,"rateHigh":949.340043,"minLocal":980}]}</script>
 
 <div class="wrap">
   <header>

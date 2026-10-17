@@ -72,7 +72,7 @@ const COL = {green:"#118A44", navy:"#0C2F6E", card:"#0B1628", gold:"#F2C230", wh
 const FD = '"Montserrat",sans-serif', FB = '"Manrope",sans-serif', FM = '"DM Mono",monospace';
 
 /* ---------- Datos: márgenes publicados (config.json) × USDT de alcambio ahora ---------- */
-let D = null, live = false;
+let D = null, live = false, manual = false;
 try {
   const timeout = ms => new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms));
   const [cfg, api] = await Promise.race([Promise.all([
@@ -85,13 +85,13 @@ try {
   const rates = (api && api.data && api.data.getCountryConversions && api.data.getCountryConversions.conversionRates) || [];
   const usdL = rates.filter(x => x.official && x.rateCurrency && x.rateCurrency.code === "USD");
   const b = usdL.find(x => x.type === "SECONDARY") || usdL[0];
-  const manual = cfg.rateMode === "manual" && +cfg.manualUsdt > 0;
+  manual = cfg.rateMode === "manual" && +cfg.manualUsdt > 0;
   const usdt = manual ? +cfg.manualUsdt : (p && +p.sellAverage > 0 ? (live = true, +p.sellAverage) : +cfg.lastUsdt || 0);
   D = {usdt, bcv: b ? +b.baseValue : +cfg.lastBcv || 0, tierMin: +cfg.tierMin || 0, ppPct: (+cfg.paypalPct || 0)/100, ppFix: +cfg.paypalFixed || 0,
     corr: (cfg.corr || []).filter(c => META[c.id]).map(c => ({id:c.id, cur:c.cur, unit:c.unit, rate:usdt*c.k, rateHigh:usdt*c.kHigh, minLocal:c.minLocal}))};
 } catch {}
 if (!D || !D.corr.length) { $("status").textContent = "No se pudieron cargar las tasas. Recarga la página."; return; }
-$("status").textContent = live ? "Tasas en vivo" : "Tasas guardadas";
+$("status").textContent = manual ? `Tasa manual del panel · USDT ${fmt(D.usdt)}` : live ? "Tasas en vivo" : "Tasas guardadas";
 const byId = id => D.corr.find(c => c.id === id);
 const hasTier = c => c.rateHigh > c.rate && c.minLocal > 0;
 const rateFor = (c, net) => hasTier(c) && net >= c.minLocal ? c.rateHigh : c.rate;
@@ -303,7 +303,7 @@ const FEED = [
       txt(g, `SI ENVÍAS DESDE ${META[c.id].name.toUpperCase()}`, 78, 300, 64, {font:FD, weight:900, max:w - 156});
       g.fillStyle = COL.card; g.fill(rr(50, 360, w - 100, 640, 44)); flag(g, c.id, w/2 - 60, 400, 120);
       txt(g, `${fmt(A, decOf(c))} ${c.cur}`, w/2, 610, 100, {font:FM, weight:500, align:"center", max:w - 200});
-      txt(g, "tu familiar recibe", w/2, 700, 36, {color:COL.dim, align:"center"});
+      txt(g, c.id === "pp" ? `llegan ${fmt(q.net)} $ (PayPal cobra ${fmt(D.ppPct*100,1)}%) y tu familiar recibe` : "tu familiar recibe", w/2, 700, 32, {color:COL.dim, align:"center", max:w - 180});
       txt(g, fmt(q.bs) + " Bs", w/2, 850, 104, {font:FM, weight:500, color:COL.gold, align:"center", max:w - 200});
       txt(g, `Tasa de hoy: ${unitTxt(c)} = ${fmt(rateFor(c, q.net)*c.unit)} Bs`, w/2, 940, 30, {color:COL.dim, align:"center"}); warn(g, w/2, 1060); footer(g, w, h); },
       cap:`¿Cuánto recibe tu familiar hoy? 🇻🇪\n\nSi envías ${fmt(A, decOf(c))} ${META[c.id].long}, tu familiar recibe ${fmt(q.bs)} Bs.\n\nCalcula cualquier monto en nuestra web (link en la bio) y pide tu cuenta por WhatsApp ${WA}.\n⚠️ Siempre consulta la cuenta antes de pagar.\n\n${TAGS}`}; },
@@ -341,7 +341,7 @@ const VIDEOS = [
     txt(g, "TASAS DEL DÍA", 78, 380, 96, {font:FD, weight:900, max:w - 156}); txt(g, dateCap, 78, 440, 38, {weight:700, color:COL.gold}); g.restore();
     if (t > 1) { const end = rateCard(g, 50, 500, w - 100, 210, i => (t - 1.4 - i*0.6)/0.7, i => ease((t - 1.4 - i*0.6)/1.4));
       if (t > 4.6) { g.save(); g.globalAlpha = ease((t - 4.6)/0.6); warn(g, w/2, end + 50); g.restore(); } }
-    if (t > 7.5) { const z = ease((t - 7.5)/0.7); g.save(); g.globalAlpha = z; g.fillStyle = "rgba(8,17,31,.82)"; g.fillRect(0, 0, w, h);
+    if (t > 7.5) { const z = ease((t - 7.5)/0.7); g.save(); g.globalAlpha = z; g.fillStyle = "rgba(8,17,31,.94)"; g.fillRect(0, 0, w, h);
       txt(g, "Escríbenos por WhatsApp", w/2, 820, 58, {font:FD, weight:900, align:"center", max:w - 120});
       txt(g, WA, w/2, 920, 70, {font:FM, weight:500, color:COL.gold, align:"center"});
       txt(g, "Calcula tu envío en la web", w/2, 1080, 40, {weight:700, align:"center"});

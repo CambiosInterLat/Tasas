@@ -258,6 +258,35 @@ function brecha(g, w, y){
   return ref && best;
 }
 
+/* Pago en USDT: equivalente de los Bs a la tasa USDT del momento */
+function usdtCoin(g, cx, cy, r){
+  g.fillStyle = "#26A17B"; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI*2); g.fill();
+  g.strokeStyle = "rgba(255,255,255,.25)"; g.lineWidth = r*0.06; g.beginPath(); g.arc(cx, cy, r*0.86, 0, Math.PI*2); g.stroke();
+  txt(g, "₮", cx, cy + r*0.36, r*1.05, {font:FD, weight:900, align:"center"});
+}
+function storyUsdt(g, w, h){
+  bg(g, w, h); header(g, w, 90);
+  pill(g, "NUEVO", 78 + 70, 290, 28, {fill:COL.gold, color:"#2A1D00", weight:800});
+  txt(g, "TAMBIÉN", 78, 450, 100, {font:FD, weight:900});
+  txt(g, "PAGAMOS", 78, 560, 100, {font:FD, weight:900});
+  txt(g, "EN USDT", 78, 670, 100, {font:FD, weight:900, color:COL.gold});
+  usdtCoin(g, w - 230, 560, 150);
+  const c = byId("cop") || D.corr[0], A = META[c.id].ex, q = quoteBs(c, A), u = q.bs/D.usdt;
+  g.fillStyle = COL.card; g.fill(rr(50, 780, w - 100, 420, 44));
+  txt(g, "Ejemplo de hoy", w/2, 860, 34, {color:COL.dim, align:"center"});
+  txt(g, `${fmt(A, decOf(c))} ${c.cur}`, w/2, 960, 76, {font:FM, weight:500, align:"center", max:w - 200});
+  txt(g, "tu familiar recibe", w/2, 1030, 32, {color:COL.dim, align:"center"});
+  txt(g, `${fmt(u)} USDT`, w/2, 1140, 92, {font:FM, weight:500, color:"#4FD3A5", align:"center", max:w - 200});
+  [["Binance Pay o billetera TRC20 / BEP20"], ["Mismo valor que en bolívares"], ["Ideal para ahorrar en dólares"]].forEach(([s], i) => {
+    const y = 1310 + i*90;
+    g.fillStyle = "#26A17B"; g.beginPath(); g.arc(110, y - 14, 26, 0, Math.PI*2); g.fill();
+    g.strokeStyle = "#fff"; g.lineWidth = 7; g.lineCap = "round"; g.lineJoin = "round"; g.beginPath(); g.moveTo(98, y - 14); g.lineTo(107, y - 4); g.lineTo(124, y - 26); g.stroke();
+    txt(g, s, 160, y, 40, {font:FD, weight:800, max:w - 220});
+  });
+  txt(g, "Elige «USDT» en la calculadora de la web", w/2, 1640, 32, {color:COL.dim, align:"center", max:w - 120});
+  footer(g, w, h);
+}
+
 /* Banco de historias interactivas (rota cada día) */
 const quizFor = id => {
   const c = byId(id) || D.corr[0], A = META[c.id].ex, v = quoteBs(c, A).bs;
@@ -433,6 +462,7 @@ const s2 = INTERACTIVE[dayIdx % INTERACTIVE.length](), s3 = THIRD[dayIdx % THIRD
 card($("stories"), "Historia 1 · siempre primero", {name:"Tasas del día", draw: storyTasas, how:"Agrega el sticker <b>ENLACE</b> con la web: https://" + WEB + "/"}, 1080, 1920, `interlat-${stamp}-1-tasas.png`);
 card($("stories"), "Historia 2 · interactiva", s2, 1080, 1920, `interlat-${stamp}-2-interactiva.png`);
 card($("stories"), "Historia 3", s3, 1080, 1920, `interlat-${stamp}-3.png`);
+card($("stories"), "Historia extra · USDT", {name:"Pagamos en USDT", draw: storyUsdt, how:"Pie sugerido: <b>¿Tu familiar prefiere USDT? También pagamos así 💚</b>"}, 1080, 1920, `interlat-${stamp}-usdt.png`);
 card($("feed"), "Feed · 4:5", fp, 1080, 1350, `interlat-${stamp}-feed.png`);
 $("plan").innerHTML = [
   "Historia 1: tasas del día (sube esta primero)",

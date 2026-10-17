@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Redes InterLat</title>
+<link rel="icon" type="image/png" href="../favicon.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Manrope:wght@500;600;700&family=DM+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#F1F5F3; --surface:#FFFFFF; --ink:#0E1A33; --muted:#5A6878; --line:#DCE3EA;
+  --brand:#118A44; --brand-ink:#FFFFFF; --navy:#0C2F6E; --gold:#B8871F; --soft:#E6EDF8;
+  --f-display:"Montserrat","Segoe UI",system-ui,sans-serif; --f-body:"Manrope","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#08111F; --surface:#0F1A2C; --ink:#E7EEF7; --muted:#90A0B4; --line:#1F2C42; --brand:#2DA84A; --soft:#13283F; --gold:#F2C230; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#08111F; --surface:#0F1A2C; --ink:#E7EEF7; --muted:#90A0B4; --line:#1F2C42; --brand:#2DA84A; --soft:#13283F; --gold:#F2C230; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+main{max-width:1180px;margin:0 auto;padding:22px 16px 60px;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.15}
+h1{font-size:1.5rem} h2{font-size:1.05rem}
+.top{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.top img{width:52px;height:52px;border-radius:50%}
+.top p{margin:2px 0 0;color:var(--muted);font-size:.9rem}
+.status{margin-left:auto;font-size:.8rem;font-weight:700;border-radius:99px;padding:4px 12px;background:var(--soft)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.item canvas{width:100%;height:auto;border-radius:12px;display:block;background:#0C2F6E}
+.tag{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:var(--brand)}
+.note{font-size:.84rem;color:var(--muted);margin:0}
+.note b{color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-weight:700;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 13px}
+button.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+button:disabled{opacity:.55;cursor:wait}
+textarea{width:100%;min-height:110px;font:inherit;font-size:.84rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px;resize:vertical}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.plan ol{margin:0;padding-left:20px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-weight:700;z-index:9}
+[hidden]{display:none!important}
+</style>
+</head><body>
+<main>
+  <div class="top"><img src="../logo.jpg?v=1" alt="InterLat"><div><h1>Redes de hoy</h1><p id="day"></p></div><span class="status" id="status">Cargando tasas…</span></div>
+  <div class="plan"><h2>Plan de hoy</h2><ol id="plan"></ol></div>
+  <h2>Historias (Instagram y estados de WhatsApp)</h2>
+  <div class="grid" id="stories"></div>
+  <h2>Publicación del feed</h2>
+  <div class="grid" id="feed"></div>
+  <h2>Videos de la semana</h2>
+  <p class="note">Publica uno el lunes y otro el jueves. El video se graba en este teléfono o PC con las tasas del momento (12 segundos).</p>
+  <div class="grid" id="videos"></div>
+  <h2>Mensaje para lista de difusión de WhatsApp</h2>
+  <div class="item"><textarea id="wa-text" readonly></textarea><div class="row"><button class="primary" id="wa-copy">Copiar mensaje</button></div></div>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(async () => {
+const $ = id => document.getElementById(id);
+const fmt = (n, d=2) => Number.isFinite(n) ? n.toLocaleString("es-VE",{minimumFractionDigits:d,maximumFractionDigits:d}) : "—";
+const decOf = c => (c.cur === "COP" || c.cur === "CLP") ? 0 : 2;
+const META = {
+  cop:{name:"Colombia", sub:"Pesos colombianos", long:"pesos colombianos", ex:100000},
+  pp: {name:"PayPal",   sub:"Dólares por PayPal", long:"dólares por PayPal", ex:100},
+  clp:{name:"Chile",    sub:"Pesos chilenos", long:"pesos chilenos", ex:50000},
+  brl:{name:"Brasil",   sub:"Reales · Pix", long:"reales", ex:200}
+};
+const WEB = "cambiosinterlat.github.io/Tasas", IG = "@interlat24", WA = "+58 424-9234587";
+const COL = {green:"#118A44", navy:"#0C2F6E", card:"#0B1628", gold:"#F2C230", white:"#FFFFFF", dim:"rgba(245,255,248,.72)", line:"rgba(255,255,255,.10)"};
+const FD = '"Montserrat",sans-serif', FB = '"Manrope",sans-serif', FM = '"DM Mono",monospace';
+
+/* ---------- Datos: márgenes publicados (config.json) × USDT de alcambio ahora ---------- */
+let D = null, live = false;
+try {
+  const timeout = ms => new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms));
+  const [cfg, api] = await Promise.race([Promise.all([
+    fetch("../config.json?t=" + Date.now(), {cache:"no-store"}).then(r => r.json()),
+    fetch("https://api.alcambio.app/graphql", {method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify({query:'query { getBinanceP2PAverages { sellAverage } getCountryConversions(payload:{countryCode:"VE"}) { conversionRates { baseValue official type rateCurrency { code } } } }'})})
+      .then(r => r.json()).catch(() => null)
+  ]), timeout(8000)]);
+  const p = api && api.data && api.data.getBinanceP2PAverages;
+  const rates = (api && api.data && api.data.getCountryConversions && api.data.getCountryConversions.conversionRates) || [];
+  const usdL = rates.filter(x => x.official && x.rateCurrency && x.rateCurrency.code === "USD");
+  const b = usdL.find(x => x.type === "SECONDARY") || usdL[0];
+  const manual = cfg.rateMode === "manual" && +cfg.manualUsdt > 0;
+  const usdt = manual ? +cfg.manualUsdt : (p && +p.sellAverage > 0 ? (live = true, +p.sellAverage) : +cfg.lastUsdt || 0);
+  D = {usdt, bcv: b ? +b.baseValue : +cfg.lastBcv || 0, tierMin: +cfg.tierMin || 0, ppPct: (+cfg.paypalPct || 0)/100, ppFix: +cfg.paypalFixed || 0,
+    corr: (cfg.corr || []).filter(c => META[c.id]).map(c => ({id:c.id, cur:c.cur, unit:c.unit, rate:usdt*c.k, rateHigh:usdt*c.kHigh, minLocal:c.minLocal}))};
+} catch {}
+if (!D || !D.corr.length) { $("status").textContent = "No se pudieron cargar las tasas. Recarga la página."; return; }
+$("status").textContent = live ? "Tasas en vivo" : "Tasas guardadas";
+const byId = id => D.corr.find(c => c.id === id);
+const hasTier = c => c.rateHigh > c.rate && c.minLocal > 0;
+const rateFor = (c, net) => hasTier(c) && net >= c.minLocal ? c.rateHigh : c.rate;
+const arrived = x => Math.max(0, x*(1-D.ppPct) - D.ppFix);
+const quoteBs = (c, A) => { const net = c.id === "pp" ? arrived(A) : A; return {net, bs: net*rateFor(c, net)}; };
+const unitTxt = c => `${c.unit === 1 ? "1" : fmt(c.unit,0)} ${c.cur}`;
+
+/* Día en hora de Venezuela: decide qué contenido toca */
+const now = new Date();
+const dayIdx = Math.floor((Date.now() - 4*3600e3)/864e5);
+const dateTxt = now.toLocaleDateString("es-VE",{weekday:"long", day:"numeric", month:"long"});
+const dateCap = dateTxt.charAt(0).toUpperCase() + dateTxt.slice(1);
+const stamp = new Date(Date.now() - 4*3600e3).toISOString().slice(0,10);
+$("day").textContent = dateCap;
+
+/* ---------- Recursos: fuentes, logo original, banderas ---------- */
+await Promise.all(["900 80px Montserrat","800 60px Montserrat","700 40px Montserrat","600 30px Manrope","700 30px Manrope","500 40px \"DM Mono\""].map(f => document.fonts.load(f).catch(() => {})));
+const loadImg = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+const svgFlag = b => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="300" height="200">${b}</svg>`);
+const FLAG_SVG = {
+  cop:`<rect width="30" height="10" fill="#FCD116"/><rect y="10" width="30" height="5" fill="#003893"/><rect y="15" width="30" height="5" fill="#CE1126"/>`,
+  clp:`<rect width="30" height="20" fill="#fff"/><rect y="10" width="30" height="10" fill="#D52B1E"/><rect width="10" height="10" fill="#0039A6"/><path d="M5 2.4l.9 2.8h2.9L6.5 6.9l.9 2.8L5 8 2.6 9.7l.9-2.8-2.4-1.7h2.9z" fill="#fff"/>`,
+  brl:`<rect width="30" height="20" fill="#009C3B"/><path d="M15 2.4 27.4 10 15 17.6 2.6 10z" fill="#FFDF00"/><circle cx="15" cy="10" r="4.6" fill="#002776"/><path d="M10.5 9.1c3-.9 6.4-.4 9 1.4" stroke="#fff" stroke-width=".8" fill="none"/>`,
+  pp:`<rect width="30" height="20" fill="#003087"/><rect x="5" y="5" width="20" height="11" rx="2" fill="#0070E0"/><rect x="5" y="7.5" width="20" height="2.2" fill="#003087"/><rect x="8" y="12" width="6" height="1.6" rx=".8" fill="#fff"/>`,
+  ve:`<rect width="30" height="6.7" fill="#FFCC00"/><rect y="6.6" width="30" height="6.8" fill="#00247D"/><rect y="13.3" width="30" height="6.7" fill="#CF142B"/>`
+};
+const LOGO = await loadImg("../logo.jpg?v=1");
+const FLAG = {};
+await Promise.all(Object.keys(FLAG_SVG).map(async k => FLAG[k] = await loadImg(svgFlag(FLAG_SVG[k]))));
+
+/* ---------- Dibujo ---------- */
+function rr(x, y, w, h, r){ const p = new Path2D(); p.moveTo(x+r, y); p.arcTo(x+w, y, x+w, y+h, r); p.arcTo(x+w, y+h, x, y+h, r); p.arcTo(x, y+h, x, y, r); p.arcTo(x, y, x+w, y, r); p.closePath(); return p; }
+function txt(g, s, x, y, size, {font=FB, weight=600, color=COL.white, align="left", max=0, base="alphabetic"} = {}){
+  let z = size;
+  g.font = `${weight} ${z}px ${font}`;
+  if (max) while (g.measureText(s).width > max && z > 10) { z -= 2; g.font = `${weight} ${z}px ${font}`; }
+  g.fillStyle = color; g.textAlign = align; g.textBaseline = base; g.fillText(s, x, y);
+  return z;
+}
+function wrap(g, s, x, y, maxW, size, lh, opt = {}){
+  g.font = `${opt.weight || 800} ${size}px ${opt.font || FD}`;
+  const words = s.split(" "), lines = []; let line = "";
+  words.forEach(w => { const t = line ? line + " " + w : w; if (g.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; });
+  if (line) lines.push(line);
+  lines.forEach((l, i) => txt(g, l, x, y + i*lh, size, Object.assign({font:FD, weight:800}, opt)));
+  return y + (lines.length - 1)*lh;
+}
+function bg(g, w, h){
+  const gr = g.createLinearGradient(0, 0, w*.6, h);
+  gr.addColorStop(0, COL.green); gr.addColorStop(.55, "#0E4D5E"); gr.addColorStop(1, COL.navy);
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.save(); g.strokeStyle = "rgba(255,255,255,.05)"; g.lineWidth = 2;
+  for (let r = 60; r < 900; r += 34) { g.beginPath(); g.arc(w + 80, -80, r, 0, Math.PI*2); g.stroke(); }
+  g.restore();
+  txt(g, "Bs", w + 30, h + 90, 520, {font:FD, weight:900, color:"rgba(255,255,255,.04)", align:"right"});
+}
+function header(g, w, y){
+  const s = 112;
+  g.save(); g.beginPath(); g.arc(78 + s/2, y + s/2, s/2, 0, Math.PI*2); g.fillStyle = "#fff"; g.fill(); g.clip();
+  if (LOGO) g.drawImage(LOGO, 78, y, s, s); g.restore();
+  txt(g, "INTERLAT", 78 + s + 26, y + 58, 50, {font:FD, weight:900});
+  txt(g, "Envíos a Venezuela", 78 + s + 26, y + 98, 30, {color:COL.dim});
+}
+function footer(g, w, h){
+  g.fillStyle = "rgba(0,0,0,.22)"; g.fillRect(0, h - 120, w, 120);
+  txt(g, `${IG}  ·  WhatsApp ${WA}`, w/2, h - 66, 32, {weight:700, align:"center", max:w - 120});
+  txt(g, "Trabajamos solo por referencia", w/2, h - 26, 26, {color:COL.dim, align:"center"});
+}
+function pill(g, s, cx, y, size, {fill="rgba(0,0,0,.25)", color=COL.white, weight=700} = {}){
+  g.font = `${weight} ${size}px ${FB}`; const tw = g.measureText(s).width, ph = size*1.9;
+  g.fillStyle = fill; g.fill(rr(cx - tw/2 - size, y, tw + size*2, ph, ph/2));
+  txt(g, s, cx, y + ph*.66, size, {weight, color, align:"center"});
+}
+function flag(g, id, x, y, w){ const h = w*2/3; g.save(); g.clip(rr(x, y, w, h, 10)); if (FLAG[id]) g.drawImage(FLAG[id], x, y, w, h); g.restore(); }
+const ease = t => 1 - Math.pow(1 - Math.min(Math.max(t,0),1), 3);
+
+/* Tarjeta de tasas como en la página. a(i) = avance 0..1 de cada fila (para el video) */
+function rateCard(g, x, y, w, rowH, a = () => 1, count = () => 1){
+  const list = D.corr, h = 120 + rowH*list.length;
+  g.fillStyle = COL.card; g.fill(rr(x, y, w, h, 44));
+  g.strokeStyle = "rgba(255,255,255,.08)"; g.lineWidth = 2; g.stroke(rr(x, y, w, h, 44));
+  txt(g, "Tasas de hoy", x + 50, y + 80, 44, {font:FD, weight:800});
+  list.forEach((c, i) => {
+    const k = ease(a(i)); if (k <= 0) return;
+    const ry = y + 120 + i*rowH, off = (1 - k)*60;
+    g.save(); g.globalAlpha = k; g.translate(off, 0);
+    if (i) { g.fillStyle = COL.line; g.fillRect(x + 40, ry, w - 80, 2); }
+    flag(g, c.id, x + 50, ry + rowH/2 - 52, 78);
+    txt(g, META[c.id].name, x + 156, ry + rowH/2 - 8, 44, {font:FD, weight:800});
+    txt(g, META[c.id].sub, x + 156, ry + rowH/2 + 38, 28, {color:"rgba(231,238,247,.62)"});
+    const n = count(i);
+    txt(g, fmt(c.rate*c.unit*n) + " Bs", x + w - 50, ry + rowH/2 - 18, 50, {font:FM, weight:500, align:"right"});
+    txt(g, `por ${unitTxt(c)}${c.id === "pp" ? " recibido" : ""}`, x + w - 50, ry + rowH/2 + 22, 26, {color:"rgba(231,238,247,.62)", align:"right"});
+    if (hasTier(c) && D.tierMin) txt(g, `+${fmt(D.tierMin,0)} $: ${fmt(c.rateHigh*c.unit*n)} Bs`, x + w - 50, ry + rowH/2 + 60, 27, {weight:700, color:COL.gold, align:"right"});
+    g.restore();
+  });
+  return y + h;
+}
+function warn(g, cx, y){ pill(g, "Siempre consulta la cuenta antes de pagar", cx, y, 30, {fill:COL.gold, color:"#2A1D00", weight:800}); }
+
+/* ---------- Piezas ---------- */
+function storyTasas(g, w, h){
+  bg(g, w, h); header(g, w, 90);
+  txt(g, "TASAS DEL DÍA", 78, 380, 96, {font:FD, weight:900, max:w - 156});
+  txt(g, dateCap, 78, 440, 38, {weight:700, color:COL.gold});
+  const end = rateCard(g, 50, 500, w - 100, 210);
+  warn(g, w/2, end + 50);
+  txt(g, "Calcula tu envío en la web", w/2, end + 210, 40, {font:FD, weight:800, align:"center"});
+  txt(g, WEB, w/2, end + 262, 30, {color:COL.dim, align:"center"});
+  footer(g, w, h);
+}
+function questionStory(q, hint, extra){
+  return (g, w, h) => {
+    bg(g, w, h); header(g, w, 90);
+    pill(g, hint, w/2, 340, 30, {fill:COL.gold, color:"#2A1D00", weight:800});
+    const yEnd = wrap(g, q, w/2, 520, w - 160, 78, 92, {align:"center", weight:900});
+    if (extra) extra(g, w, h, yEnd);
+    footer(g, w, h);
+  };
+}
+function exampleStory(id){
+  return (g, w, h) => {
+    const c = byId(id) || D.corr[0], A = META[c.id].ex, q = quoteBs(c, A);
+    bg(g, w, h); header(g, w, 90);
+    txt(g, "EJEMPLO DE HOY", 78, 380, 80, {font:FD, weight:900});
+    g.fillStyle = COL.card; g.fill(rr(50, 450, w - 100, 820, 44));
+    flag(g, c.id, 100, 510, 96);
+    txt(g, "Envías desde " + META[c.id].name, 220, 572, 42, {font:FD, weight:800, max:w - 300});
+    txt(g, `${fmt(A, decOf(c))} ${c.cur}`, w/2, 740, 110, {font:FM, weight:500, align:"center", max:w - 200});
+    if (c.id === "pp") txt(g, `Llegan a PayPal ${fmt(q.net)} $ (PayPal cobra ${fmt(D.ppPct*100,1)}%)`, w/2, 800, 28, {color:COL.dim, align:"center", max:w - 200});
+    txt(g, "Tu familiar recibe", w/2, 900, 36, {color:COL.dim, align:"center"});
+    flag(g, "ve", w/2 - 48, 930, 96);
+    txt(g, fmt(q.bs, 2) + " Bs", w/2, 1130, 108, {font:FM, weight:500, color:COL.gold, align:"center", max:w - 200});
+    txt(g, `Tasa: ${unitTxt(c)} = ${fmt(rateFor(c, q.net)*c.unit)} Bs`, w/2, 1210, 30, {color:COL.dim, align:"center"});
+    warn(g, w/2, 1320);
+    txt(g, "Pide tu cuenta por WhatsApp", w/2, 1520, 44, {font:FD, weight:800, align:"center"});
+    footer(g, w, h);
+  };
+}
+function stepsArt(g, w, y0, gap){
+  [["1","Calcula en la web","Elige país y monto."],["2","Escríbenos por WhatsApp","Te enviamos la cuenta del día."],["3","Paga y envía el comprobante","Tu familiar recibe sus Bs."]].forEach(([n,t,s], i) => {
+    const y = y0 + i*gap;
+    g.fillStyle = COL.gold; g.beginPath(); g.arc(150, y, 54, 0, Math.PI*2); g.fill();
+    txt(g, n, 150, y + 20, 56, {font:FD, weight:900, color:"#2A1D00", align:"center"});
+    txt(g, t, 240, y - 6, 46, {font:FD, weight:800, max:w - 300});
+    txt(g, s, 240, y + 42, 32, {color:COL.dim, max:w - 300});
+  });
+}
+function brecha(g, w, y){
+  const ref = byId("pp") || D.corr[0], best = Math.max(...D.corr.filter(c => c.cur === "USD").map(c => c.rate), 0);
+  txt(g, "Dólar BCV hoy", w/2, y, 38, {color:COL.dim, align:"center"});
+  txt(g, fmt(D.bcv) + " Bs", w/2, y + 110, 100, {font:FM, weight:500, align:"center"});
+  txt(g, "Dólar USDT hoy", w/2, y + 220, 38, {color:COL.dim, align:"center"});
+  txt(g, fmt(D.usdt) + " Bs", w/2, y + 330, 100, {font:FM, weight:500, color:COL.gold, align:"center"});
+  if (D.bcv > 0) pill(g, `Brecha ${fmt((D.usdt/D.bcv - 1)*100, 1)}%`, w/2, y + 390, 34, {fill:"rgba(0,0,0,.3)"});
+  return ref && best;
+}
+
+/* Banco de historias interactivas (rota cada día) */
+const quizFor = id => {
+  const c = byId(id) || D.corr[0], A = META[c.id].ex, v = quoteBs(c, A).bs;
+  const round = x => Math.round(x/100)*100;
+  const opts = [round(v), round(v*0.86), round(v*1.13)];
+  const order = [[0,1,2],[1,0,2],[1,2,0],[2,0,1]][dayIdx % 4];
+  return {c, A, opts: order.map(i => opts[i]), right: order.indexOf(0)};
+};
+const INTERACTIVE = [
+  () => ({name:"Encuesta: país", draw: questionStory("¿Desde qué país le envías a tu familia?", "ENCUESTA"),
+    how:"Agrega el sticker <b>ENCUESTA</b> en el centro con 4 opciones: Colombia, Chile, Brasil, PayPal."}),
+  () => { const z = quizFor(["cop","clp","brl","pp"][dayIdx % 4]); const L = "ABC";
+    return {name:"Quiz de tasas", draw: questionStory(`Si envías ${fmt(z.A, decOf(z.c))} ${META[z.c.id].long}, ¿cuántos Bs recibe tu familiar hoy?`, "QUIZ"),
+      how:`Agrega el sticker <b>QUIZ</b> con: ${z.opts.map((o,i) => `${L[i]}) ${fmt(o,0)} Bs`).join(" · ")}. Correcta: <b>${L[z.right]}</b>.`}; },
+  () => ({name:"Pregunta abierta", draw: questionStory("¿Tienes dudas para enviar a Venezuela? Pregúntanos aquí", "PREGUNTAS"),
+    how:"Agrega el sticker <b>PREGUNTAS</b>. Responde las preguntas en otra historia."}),
+  () => ({name:"Encuesta: Bs o USDT", draw: questionStory("¿Tu familiar prefiere recibir en bolívares o en USDT?", "ENCUESTA"),
+    how:"Agrega el sticker <b>ENCUESTA</b> con 2 opciones: Bolívares, USDT."}),
+  () => ({name:"Quiz de seguridad", draw: questionStory("¿Qué es lo primero que haces antes de pagar un envío?", "QUIZ"),
+    how:"Agrega el sticker <b>QUIZ</b> con: A) Pagar a la cuenta de siempre · B) Consultar la cuenta · C) Pagar y avisar después. Correcta: <b>B</b>."}),
+  () => ({name:"Deslizador", draw: questionStory("¿Qué tan rápido llegó tu último envío con nosotros?", "DESLIZA"),
+    how:"Agrega el sticker <b>DESLIZADOR</b> con el emoji ⚡."}),
+  () => ({name:"Encuesta: este mes", draw: questionStory("¿Ya le enviaste a tu familia este mes?", "ENCUESTA"),
+    how:"Agrega el sticker <b>ENCUESTA</b> con 2 opciones: Sí, ya envié · Todavía no."})
+];
+const THIRD = [
+  () => ({name:"Ejemplo Colombia", draw: exampleStory("cop"), how:"Agrega el sticker <b>ENLACE</b> con la web: https://" + WEB + "/"}),
+  () => ({name:"Cómo enviar", draw: (g, w, h) => { bg(g, w, h); header(g, w, 90); txt(g, "ASÍ DE FÁCIL", 78, 400, 96, {font:FD, weight:900}); stepsArt(g, w, 620, 260); warn(g, w/2, 1420); footer(g, w, h); },
+    how:"Agrega el sticker <b>ENLACE</b> con la web: https://" + WEB + "/"}),
+  () => ({name:"Ejemplo Chile", draw: exampleStory("clp"), how:"Agrega el sticker <b>ENLACE</b> con la web: https://" + WEB + "/"}),
+  () => ({name:"BCV y USDT", draw: (g, w, h) => { bg(g, w, h); header(g, w, 90); txt(g, "EL DÓLAR HOY", 78, 400, 96, {font:FD, weight:900}); brecha(g, w, 600);
+      txt(g, "Calcula cuánto recibe tu familiar", w/2, 1300, 40, {font:FD, weight:800, align:"center"}); txt(g, WEB, w/2, 1352, 30, {color:COL.dim, align:"center"}); footer(g, w, h); },
+    how:"Agrega el sticker <b>ENLACE</b> con la web: https://" + WEB + "/"}),
+  () => ({name:"Ejemplo Brasil", draw: exampleStory("brl"), how:"Agrega el sticker <b>ENLACE</b> con la web: https://" + WEB + "/"}),
+  () => ({name:"Por referencia", draw: questionStory("Trabajamos solo por referencia. ¿Quién te recomendó?", "PREGUNTAS", (g, w, h, y) => {
+      txt(g, "Así te cuidamos de estafas en redes.", w/2, y + 110, 34, {color:COL.dim, align:"center"}); }),
+    how:"Agrega el sticker <b>PREGUNTAS</b> o <b>MENCIONAR</b> para que etiqueten a quien los recomendó."}),
+  () => ({name:"Ejemplo PayPal", draw: exampleStory("pp"), how:"Agrega el sticker <b>ENLACE</b> con la web: https://" + WEB + "/"})
+];
+
+/* Banco del feed (4:5) con texto para la publicación */
+const TAGS = "#EnviosAVenezuela #RemesasVenezuela #Venezuela #Maturin #Bolivares #CambioDeDivisas #InterLat";
+const FEED = [
+  () => ({name:"Tasas del día", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60); txt(g, "TASAS DEL DÍA", 78, 290, 76, {font:FD, weight:900}); txt(g, dateCap, 78, 340, 32, {weight:700, color:COL.gold});
+      const end = rateCard(g, 50, 380, w - 100, 172); warn(g, w/2, end + 30); footer(g, w, h); },
+    cap:`Tasas del día ${dateTxt} 🇻🇪\n\n${D.corr.map(c => `${META[c.id].name}: ${unitTxt(c)} = ${fmt(c.rate*c.unit)} Bs`).join("\n")}\n\nDesde ${fmt(D.tierMin,0)} $ tienes tasa preferencial.\n⚠️ Siempre consulta la cuenta antes de pagar.\n📲 WhatsApp ${WA}\n🧮 Calcula tu envío: link en la bio\n\n${TAGS}`}),
+  () => ({name:"Cómo enviar", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60); txt(g, "ENVÍA EN 3 PASOS", 78, 300, 74, {font:FD, weight:900, max:w - 156}); stepsArt(g, w, 470, 200); warn(g, w/2, 1090); footer(g, w, h); },
+    cap:`Enviar dinero a Venezuela es así de fácil 👇\n\n1️⃣ Calcula en nuestra web cuánto recibe tu familiar.\n2️⃣ Escríbenos por WhatsApp y te enviamos la cuenta del día.\n3️⃣ Paga, envía el comprobante y tu familiar recibe sus bolívares.\n\n⚠️ Siempre consulta la cuenta antes de pagar.\n📲 ${WA}\n\n${TAGS}`}),
+  () => { const c = byId(["cop","clp","brl","pp"][Math.floor(dayIdx/7) % 4]) || D.corr[0], A = META[c.id].ex, q = quoteBs(c, A);
+    return {name:"Ejemplo " + META[c.id].name, draw: (g, w, h) => { bg(g, w, h); header(g, w, 60);
+      txt(g, `SI ENVÍAS DESDE ${META[c.id].name.toUpperCase()}`, 78, 300, 64, {font:FD, weight:900, max:w - 156});
+      g.fillStyle = COL.card; g.fill(rr(50, 360, w - 100, 640, 44)); flag(g, c.id, w/2 - 60, 400, 120);
+      txt(g, `${fmt(A, decOf(c))} ${c.cur}`, w/2, 610, 100, {font:FM, weight:500, align:"center", max:w - 200});
+      txt(g, "tu familiar recibe", w/2, 700, 36, {color:COL.dim, align:"center"});
+      txt(g, fmt(q.bs) + " Bs", w/2, 850, 104, {font:FM, weight:500, color:COL.gold, align:"center", max:w - 200});
+      txt(g, `Tasa de hoy: ${unitTxt(c)} = ${fmt(rateFor(c, q.net)*c.unit)} Bs`, w/2, 940, 30, {color:COL.dim, align:"center"}); warn(g, w/2, 1060); footer(g, w, h); },
+      cap:`¿Cuánto recibe tu familiar hoy? 🇻🇪\n\nSi envías ${fmt(A, decOf(c))} ${META[c.id].long}, tu familiar recibe ${fmt(q.bs)} Bs.\n\nCalcula cualquier monto en nuestra web (link en la bio) y pide tu cuenta por WhatsApp ${WA}.\n⚠️ Siempre consulta la cuenta antes de pagar.\n\n${TAGS}`}; },
+  () => ({name:"Seguridad", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60);
+      txt(g, "ANTES DE PAGAR", 78, 300, 84, {font:FD, weight:900, max:w - 156});
+      wrap(g, "Siempre consulta la cuenta. Las cuentas cambian.", 78, 460, w - 156, 62, 76, {weight:800});
+      wrap(g, "No pagues a una cuenta anterior sin confirmar con nosotros por WhatsApp.", 78, 680, w - 156, 40, 54, {font:FB, weight:600, color:COL.dim});
+      pill(g, "Trabajamos solo por referencia", w/2, 900, 36, {fill:COL.gold, color:"#2A1D00", weight:800}); footer(g, w, h); },
+    cap:`⚠️ Antes de pagar, SIEMPRE consulta la cuenta.\n\nNuestras cuentas pueden cambiar. No pagues a una cuenta anterior sin confirmar por WhatsApp ${WA}.\n\nTrabajamos solo por referencia para cuidarte de estafas en redes. Si alguien te escribe en nuestro nombre desde otro número, no es InterLat.\n\n${TAGS}`}),
+  () => ({name:"Tasa preferencial", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60);
+      txt(g, "ENVÍOS GRANDES", 78, 300, 84, {font:FD, weight:900, max:w - 156}); txt(g, `Desde ${fmt(D.tierMin,0)} $ recibes más`, 78, 370, 44, {weight:700, color:COL.gold});
+      D.corr.filter(hasTier).forEach((c, i) => { const y = 470 + i*150; g.fillStyle = COL.card; g.fill(rr(50, y, w - 100, 130, 30)); flag(g, c.id, 90, y + 33, 96);
+        txt(g, META[c.id].name, 210, y + 80, 40, {font:FD, weight:800}); txt(g, `${fmt(c.rateHigh*c.unit)} Bs`, w - 90, y + 64, 44, {font:FM, weight:500, color:COL.gold, align:"right"});
+        txt(g, `por ${unitTxt(c)}`, w - 90, y + 104, 24, {color:COL.dim, align:"right"}); });
+      footer(g, w, h); },
+    cap:`💎 Tasa preferencial para envíos desde ${fmt(D.tierMin,0)} $\n\n${D.corr.filter(hasTier).map(c => `${META[c.id].name}: ${unitTxt(c)} = ${fmt(c.rateHigh*c.unit)} Bs`).join("\n")}\n\nEscríbenos por WhatsApp ${WA}.\n⚠️ Siempre consulta la cuenta antes de pagar.\n\n${TAGS}`}),
+  () => ({name:"Por qué InterLat", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60);
+      txt(g, "¿POR QUÉ INTERLAT?", 78, 300, 76, {font:FD, weight:900, max:w - 156});
+      [["CONFIANZA","Solo por referencia. Sin intermediarios raros."],["RAPIDEZ","Tu familiar recibe el mismo día."],["RESPONSABILIDAD","Te confirmamos cada paso por WhatsApp."]].forEach(([t,s], i) => {
+        const y = 420 + i*220; g.fillStyle = COL.card; g.fill(rr(50, y, w - 100, 190, 34));
+        txt(g, t, 100, y + 82, 50, {font:FD, weight:900, color:COL.gold}); txt(g, s, 100, y + 140, 32, {color:COL.dim, max:w - 200}); });
+      footer(g, w, h); },
+    cap:`¿Por qué enviar con InterLat? 🇻🇪\n\n✅ Confianza: trabajamos solo por referencia.\n⚡ Rapidez: tu familiar recibe el mismo día.\n🤝 Responsabilidad: te confirmamos cada paso por WhatsApp.\n\n📲 ${WA}\n\n${TAGS}`}),
+  () => ({name:"BCV y USDT", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60); txt(g, "EL DÓLAR HOY", 78, 300, 84, {font:FD, weight:900}); brecha(g, w, 440); footer(g, w, h); },
+    cap:`El dólar hoy en Venezuela 🇻🇪\n\nBCV: ${fmt(D.bcv)} Bs\nUSDT: ${fmt(D.usdt)} Bs\n\nCon nosotros tu familiar recibe a tasa de mercado. Calcula tu envío en la web (link en la bio).\n\n${TAGS}`})
+];
+
+/* ---------- Video (12 s, grabado en el navegador) ---------- */
+const VIDEOS = [
+  {name:"Video tasas (lunes)", file:"tasas", frame(g, w, h, t){
+    bg(g, w, h);
+    g.save(); g.globalAlpha = ease(t/0.6); header(g, w, 90); g.restore();
+    const k = ease((t - 0.4)/0.8);
+    g.save(); g.globalAlpha = k; g.translate(0, (1 - k)*40);
+    txt(g, "TASAS DEL DÍA", 78, 380, 96, {font:FD, weight:900, max:w - 156}); txt(g, dateCap, 78, 440, 38, {weight:700, color:COL.gold}); g.restore();
+    if (t > 1) { const end = rateCard(g, 50, 500, w - 100, 210, i => (t - 1.4 - i*0.6)/0.7, i => ease((t - 1.4 - i*0.6)/1.4));
+      if (t > 4.6) { g.save(); g.globalAlpha = ease((t - 4.6)/0.6); warn(g, w/2, end + 50); g.restore(); } }
+    if (t > 7.5) { const z = ease((t - 7.5)/0.7); g.save(); g.globalAlpha = z; g.fillStyle = "rgba(8,17,31,.82)"; g.fillRect(0, 0, w, h);
+      txt(g, "Escríbenos por WhatsApp", w/2, 820, 58, {font:FD, weight:900, align:"center", max:w - 120});
+      txt(g, WA, w/2, 920, 70, {font:FM, weight:500, color:COL.gold, align:"center"});
+      txt(g, "Calcula tu envío en la web", w/2, 1080, 40, {weight:700, align:"center"});
+      txt(g, WEB, w/2, 1140, 34, {color:COL.dim, align:"center"});
+      txt(g, IG, w/2, 1300, 46, {font:FD, weight:800, align:"center"}); g.restore(); }
+    footer(g, w, h);
+  }},
+  {name:"Video ejemplo (jueves)", file:"ejemplo", frame(g, w, h, t){
+    const ids = ["cop","clp","brl","pp"].filter(byId), seg = 2.4, i = Math.min(Math.floor(Math.max(t - 0.6, 0)/seg), ids.length - 1);
+    bg(g, w, h); header(g, w, 90);
+    txt(g, "¿CUÁNTO RECIBE TU FAMILIAR?", 78, 380, 64, {font:FD, weight:900, max:w - 156});
+    if (t < 0.6 + seg*ids.length) {
+      const lt = Math.max(t - 0.6 - i*seg, 0), c = byId(ids[i]), A = META[c.id].ex, q = quoteBs(c, A), k = ease(lt/0.5), out = lt > seg - 0.35 ? 1 - ease((lt - seg + 0.35)/0.35) : 1;
+      g.save(); g.globalAlpha = k*out; g.translate((1 - k)*80, 0);
+      g.fillStyle = COL.card; g.fill(rr(50, 480, w - 100, 820, 44)); flag(g, c.id, w/2 - 60, 540, 120);
+      txt(g, `${fmt(A, decOf(c))} ${c.cur}`, w/2, 800, 110, {font:FM, weight:500, align:"center", max:w - 200});
+      txt(g, "Envías desde " + META[c.id].name, w/2, 870, 36, {color:COL.dim, align:"center"});
+      txt(g, fmt(q.bs*ease(lt/1.2)) + " Bs", w/2, 1080, 104, {font:FM, weight:500, color:COL.gold, align:"center", max:w - 200});
+      txt(g, "recibe en Venezuela", w/2, 1150, 36, {color:COL.dim, align:"center"}); g.restore();
+    } else {
+      const z = ease((t - 0.6 - seg*ids.length)/0.6); g.save(); g.globalAlpha = z;
+      txt(g, "Pide tu cuenta por WhatsApp", w/2, 820, 56, {font:FD, weight:900, align:"center", max:w - 120});
+      txt(g, WA, w/2, 920, 70, {font:FM, weight:500, color:COL.gold, align:"center"});
+      warn(g, w/2, 1030); txt(g, IG, w/2, 1260, 46, {font:FD, weight:800, align:"center"}); g.restore();
+    }
+    footer(g, w, h);
+  }}
+];
+const VID_LEN = 12;
+
+/* ---------- Interfaz ---------- */
+let tt; const toast = m => { const t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2200); };
+const copy = (s, ok) => navigator.clipboard.writeText(s).then(() => toast(ok)).catch(() => toast("No se pudo copiar"));
+const blobOf = cv => new Promise(res => cv.toBlob(res, "image/png"));
+async function share(blob, name){
+  const file = new File([blob], name, {type: blob.type});
+  if (navigator.canShare && navigator.canShare({files:[file]})) { try { await navigator.share({files:[file]}); return; } catch (e) { if (e && e.name === "AbortError") return; } }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function card(host, tag, piece, w, h, file){
+  const el = document.createElement("div"); el.className = "item";
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+  piece.draw(cv.getContext("2d"), w, h);
+  el.innerHTML = `<span class="tag">${tag}</span><h3>${piece.name}</h3>`;
+  el.appendChild(cv);
+  if (piece.how) el.insertAdjacentHTML("beforeend", `<p class="note">${piece.how}</p>`);
+  if (piece.cap) { const ta = document.createElement("textarea"); ta.readOnly = true; ta.value = piece.cap; el.appendChild(ta); }
+  const row = document.createElement("div"); row.className = "row";
+  const b1 = document.createElement("button"); b1.className = "primary"; b1.textContent = "Compartir / descargar";
+  b1.onclick = async () => share(await blobOf(cv), file);
+  row.appendChild(b1);
+  if (piece.cap) { const b2 = document.createElement("button"); b2.textContent = "Copiar texto"; b2.onclick = () => copy(piece.cap, "Texto copiado"); row.appendChild(b2); }
+  el.appendChild(row); host.appendChild(el);
+}
+const s2 = INTERACTIVE[dayIdx % INTERACTIVE.length](), s3 = THIRD[dayIdx % THIRD.length](), fp = FEED[dayIdx % FEED.length]();
+card($("stories"), "Historia 1 · siempre primero", {name:"Tasas del día", draw: storyTasas, how:"Agrega el sticker <b>ENLACE</b> con la web: https://" + WEB + "/"}, 1080, 1920, `interlat-${stamp}-1-tasas.png`);
+card($("stories"), "Historia 2 · interactiva", s2, 1080, 1920, `interlat-${stamp}-2-interactiva.png`);
+card($("stories"), "Historia 3", s3, 1080, 1920, `interlat-${stamp}-3.png`);
+card($("feed"), "Feed · 4:5", fp, 1080, 1350, `interlat-${stamp}-feed.png`);
+$("plan").innerHTML = [
+  "Historia 1: tasas del día (sube esta primero)",
+  `Historia 2: ${s2.name}`,
+  `Historia 3: ${s3.name}`,
+  `Feed: ${fp.name} (copia el texto)`,
+  "Estados de WhatsApp: las mismas 3 historias",
+  now.getDay() === 1 ? "Hoy toca video: Video tasas" : now.getDay() === 4 ? "Hoy toca video: Video ejemplo" : "Videos: lunes y jueves"
+].map(s => `<li>${s}</li>`).join("");
+
+/* Videos: vista previa en bucle + grabación MP4 (o WebM si el navegador no graba MP4) */
+const mime = ["video/mp4;codecs=avc1.42E01E", "video/mp4", "video/webm;codecs=vp9", "video/webm"].find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
+VIDEOS.forEach(v => {
+  const el = document.createElement("div"); el.className = "item";
+  el.innerHTML = `<span class="tag">Reel · 12 s</span><h3>${v.name}</h3>`;
+  const cv = document.createElement("canvas"); cv.width = 1080; cv.height = 1920; el.appendChild(cv);
+  const g = cv.getContext("2d"); let t0 = performance.now(), rec = null;
+  (function loop(){ const t = ((performance.now() - t0)/1000) % (VID_LEN + (rec ? 0 : 1)); v.frame(g, 1080, 1920, Math.min(t, VID_LEN)); requestAnimationFrame(loop); })();
+  const row = document.createElement("div"); row.className = "row";
+  const b = document.createElement("button"); b.className = "primary"; b.textContent = mime ? "Grabar video" : "Este navegador no graba video";
+  b.disabled = !mime;
+  b.onclick = () => {
+    b.disabled = true; b.textContent = "Grabando… 12 s";
+    const chunks = []; rec = new MediaRecorder(cv.captureStream(30), {mimeType: mime, videoBitsPerSecond: 8e6});
+    rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+    rec.onstop = () => { const blob = new Blob(chunks, {type: mime.split(";")[0]}); rec = null; b.disabled = false; b.textContent = "Grabar video";
+      share(blob, `interlat-${stamp}-${v.file}.${mime.includes("mp4") ? "mp4" : "webm"}`); };
+    t0 = performance.now(); rec.start(500); setTimeout(() => rec && rec.stop(), VID_LEN*1000 + 300);
+  };
+  row.appendChild(b); el.appendChild(row);
+  if (mime && !mime.includes("mp4")) el.insertAdjacentHTML("beforeend", `<p class="note">Este navegador graba en WebM. Para MP4 usa Chrome actualizado o Safari.</p>`);
+  $("videos").appendChild(el);
+});
+
+/* Texto para difusión de WhatsApp */
+const waTxt = [`*InterLat · Tasas del día* 🇻🇪`, dateCap, "",
+  ...D.corr.map(c => `${META[c.id].name}: ${unitTxt(c)} = *${fmt(c.rate*c.unit)} Bs*${c.id === "pp" ? " (recibido)" : ""}`),
+  ...(D.tierMin && D.corr.some(hasTier) ? ["", `💎 Desde ${fmt(D.tierMin,0)} $: tasa preferencial`] : []),
+  "", "🧮 Calcula tu envío: https://" + WEB + "/", "⚠️ *Siempre consulta la cuenta antes de pagar.*", "📲 " + WA].join("\n");
+$("wa-text").value = waTxt;
+$("wa-copy").onclick = () => copy(waTxt, "Mensaje copiado");
+})();
+</script>
+</body></html>

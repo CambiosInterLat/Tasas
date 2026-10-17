@@ -170,6 +170,13 @@ header h1{font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:va
 .contact-bar svg{width:18px;height:18px}
 @media (max-width:420px){.contact-bar{border-radius:18px}}
 .logo-img{width:88px;height:88px;border-radius:50%;background:#fff;flex:none;object-fit:cover;box-shadow:0 0 0 3px var(--surface),0 8px 22px -10px rgba(12,47,110,.55);animation:fadeUp .6s cubic-bezier(.2,.8,.2,1) both}
+.payin{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;z-index:1}
+.payin .label{color:var(--on-note-dim)}
+.seg2{display:flex;background:rgba(0,0,0,.22);border-radius:999px;padding:3px;gap:2px}
+.seg2 button{border:0;background:transparent;color:var(--on-note-dim);font:inherit;font-weight:700;font-size:.85rem;padding:6px 14px;border-radius:999px;cursor:pointer;transition:background .25s,color .25s}
+.seg2 button[aria-pressed="true"]{background:var(--on-note);color:var(--note-b)}
+.seg2 button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.usdt-ico{width:18px;height:18px;border-radius:50%;background:#26A17B;color:#fff;display:inline-grid;place-items:center;font-size:.68rem;font-weight:800;font-family:var(--f-body);flex:none}
 /* ---------- Movimiento y suavidad ---------- */
 html{scroll-behavior:smooth}
 body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
@@ -232,7 +239,7 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
 @media (prefers-reduced-motion: no-preference){.chip,.btn{transition:transform .12s, background .15s}.btn:active{transform:scale(.98)}}
 </style>
 
-<script id="rates-data" type="application/json">{"brand":"InterLat","whatsapp":"584249234587","hours":"","eta":"","updatedAt":1792201424423,"usdt":1005.38,"bcv":880.1159,"tierMin":1000,"paypalPct":5.4,"paypalFixed":0,"history":[{"d":"2026-10-16","usdt":1003.39,"bcv":880.12}],"corr":[{"id":"cop","cur":"COP","unit":1000,"rate":0.291597,"rateHigh":0.294634,"minLocal":3300000},{"id":"pp","cur":"USD","unit":1,"rate":912.151113,"rateHigh":922.174751,"minLocal":1000},{"id":"clp","cur":"CLP","unit":1000,"rate":0.941615,"rateHigh":0.951739,"minLocal":990000},{"id":"brl","cur":"BRL","unit":1,"rate":184.696604,"rateHigh":186.620527,"minLocal":5210},{"id":"usd","cur":"USD","unit":1,"rate":940.994644,"rateHigh":951.222847,"minLocal":980}]}</script>
+<script id="rates-data" type="application/json">{"brand":"InterLat","whatsapp":"584249234587","hours":"","eta":"","updatedAt":1792202943522,"usdt":1006.04,"bcv":880.1159,"tierMin":1000,"paypalPct":5.4,"paypalFixed":0,"history":[{"d":"2026-10-16","usdt":1003.39,"bcv":880.12}],"corr":[{"id":"cop","cur":"COP","unit":1000,"rate":0.291788,"rateHigh":0.294828,"minLocal":3300000},{"id":"pp","cur":"USD","unit":1,"rate":912.749911,"rateHigh":922.78013,"minLocal":1000},{"id":"clp","cur":"CLP","unit":1000,"rate":0.942233,"rateHigh":0.952364,"minLocal":990000},{"id":"brl","cur":"BRL","unit":1,"rate":184.817851,"rateHigh":186.743037,"minLocal":5210},{"id":"usd","cur":"USD","unit":1,"rate":941.612377,"rateHigh":951.847294,"minLocal":980}]}</script>
 
 <div class="wrap">
   <header>
@@ -264,6 +271,11 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
     <div class="mid"><span class="line"></span><span id="rate-line">—</span><span class="line"></span></div>
     <div class="tier" id="tier" hidden></div>
 
+    <div class="payin" id="payin" hidden>
+      <span class="label">Recibe en</span>
+      <div class="seg2" role="group" aria-label="Moneda que recibe el beneficiario"><button type="button" id="pay-bs" aria-pressed="true">Bolívares</button><button type="button" id="pay-usdt" aria-pressed="false">USDT</button></div>
+    </div>
+
     <label class="amt" for="recv">
       <span class="label">Tu familiar recibe</span>
       <span class="amt-row"><input id="recv" type="number" inputmode="decimal" step="any" min="0"><span class="cur" id="recv-cur">Bs</span></span>
@@ -274,9 +286,10 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
       <summary>Agregar datos del beneficiario <span>(opcional)</span></summary>
       <div class="bgrid">
         <label for="b-name"><span class="label">Nombre y apellido</span><input id="b-name" autocomplete="off"></label>
-        <label for="b-ci"><span class="label">Cédula</span><input id="b-ci" inputmode="numeric" placeholder="V-12345678" autocomplete="off"></label>
-        <label for="b-bank"><span class="label">Banco</span><input id="b-bank" list="banks" autocomplete="off"></label>
-        <label for="b-tel"><span class="label">Teléfono pago móvil</span><input id="b-tel" inputmode="tel" placeholder="0414-1234567" autocomplete="off"></label>
+        <label for="b-ci" class="bs-only"><span class="label">Cédula</span><input id="b-ci" inputmode="numeric" placeholder="V-12345678" autocomplete="off"></label>
+        <label for="b-bank" class="bs-only"><span class="label">Banco</span><input id="b-bank" list="banks" autocomplete="off"></label>
+        <label for="b-tel" class="bs-only"><span class="label">Teléfono pago móvil</span><input id="b-tel" inputmode="tel" placeholder="0414-1234567" autocomplete="off"></label>
+        <label for="b-wallet" id="b-wallet-l" style="grid-column:1/-1" hidden><span class="label">Binance Pay ID, correo o dirección USDT (TRC20 / BEP20)</span><input id="b-wallet" autocomplete="off"></label>
         <label for="b-ref" style="grid-column:1/-1"><span class="label">¿Quién te recomendó? (clientes nuevos)</span><input id="b-ref" autocomplete="off" placeholder="Nombre de quien te recomendó"></label>
       </div>
       <datalist id="banks"><option value="Banco de Venezuela"><option value="Banesco"><option value="Mercantil"><option value="Provincial"><option value="Bancamiga"><option value="BNC"><option value="Banco del Tesoro"><option value="Bicentenario"><option value="Banplus"><option value="Venezolano de Crédito"></datalist>
@@ -316,7 +329,7 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
     <ol class="how">
       <li><div><b>Calcula y escríbenos</b><span>Elige tu país, pon el monto y solicita la tasa por WhatsApp.</span></div></li>
       <li><div><b>Consulta la cuenta y paga</b><span>Siempre pide la cuenta antes de pagar, porque puede cambiar. Envía el comprobante y los datos del beneficiario: nombre, cédula, banco y teléfono.</span></div></li>
-      <li><div><b>Tu familiar recibe en Bs</b><span>Pagamos por pago móvil o transferencia y te enviamos el comprobante.</span></div></li>
+      <li><div><b>Tu familiar recibe en Bs o USDT</b><span>Pagamos por pago móvil, transferencia o USDT a su billetera, y te enviamos el comprobante.</span></div></li>
     </ol>
   </section>
 
@@ -328,6 +341,7 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
       <details><summary>¿Cuánto tarda en llegar?</summary><p id="faq-eta">Normalmente el mismo día, después de confirmar tu pago.</p></details>
       <details><summary>¿Qué datos necesito del beneficiario?</summary><p>Nombre completo, cédula, banco y teléfono afiliado a pago móvil. Para transferencia, el número de cuenta de 20 dígitos.</p></details>
       <details><summary>¿Por qué la tasa puede cambiar?</summary><p>El bolívar se mueve varias veces al día. La tasa queda fija cuando confirmamos tu pago.</p></details>
+      <details><summary>¿Puedo recibir en USDT?</summary><p>Sí. Elige "USDT" en la calculadora. Te pagamos el equivalente en USDT a la tasa del momento, a tu Binance Pay o a tu billetera (TRC20 o BEP20).</p></details>
       <details><summary>¿Cómo funciona con PayPal?</summary><p id="faq-pp">PayPal descuenta su comisión al enviar. Pagamos en bolívares según el monto que llega a nuestra cuenta.</p></details>
       <details><summary>¿Cómo sé que mi envío llegó?</summary><p>Te damos un número de operación y te enviamos el comprobante del pago en Venezuela.</p></details>
     </div>
@@ -393,7 +407,7 @@ async function liveData(D0){
     if (!(usdt > 0) || !Array.isArray(cfg.corr)) return D0;
     return Object.assign({}, D0, {
       brand: cfg.brand, whatsapp: cfg.whatsapp, hours: cfg.hours, eta: cfg.eta, tierMin: cfg.tierMin,
-      paypalPct: cfg.paypalPct, paypalFixed: cfg.paypalFixed, usdt,
+      paypalPct: cfg.paypalPct, paypalFixed: cfg.paypalFixed, usdtPayout: cfg.usdtPayout, usdt,
       bcv: b ? +b.baseValue : (+cfg.lastBcv || D0.bcv || 0),
       updatedAt: manual ? cfg.updatedAt : ((p && +p.updatedAt) || cfg.updatedAt || Date.now()),
       corr: cfg.corr.map(c => ({id: c.id, cur: c.cur, unit: c.unit, rate: usdt*c.k, rateHigh: usdt*c.kHigh, minLocal: c.minLocal}))
@@ -421,6 +435,27 @@ const pretty = "+" + wa.replace(/^(\d{2})(\d{3})(\d+)$/, "$1 $2-$3");
 $("contact").textContent = pretty;
 $("fab").href = $("wa2").href = waText(`Hola ${brand || "InterLat"}, quiero información para enviar dinero a Venezuela.`);
 $("recv-cur").innerHTML = FLAGS.ve + "Bs";
+/* Pago al beneficiario en Bs o en USDT (equivalente de esos Bs a la tasa USDT del momento) */
+let payIn = "bs";
+const usdtOK = D.usdtPayout !== false && +D.usdt > 0;
+const toOut = bs => payIn === "usdt" ? bs / D.usdt : bs;
+const fromOut = v => payIn === "usdt" ? v * D.usdt : v;
+const outU = () => payIn === "usdt" ? "USDT" : "Bs";
+const fmtOut = bs => { const v = toOut(bs); return payIn === "usdt" && v < 1 ? fmt(v, 4) : fmt(v); };
+function setPay(v){
+  if (v === payIn) return;
+  payIn = v;
+  $("pay-bs").setAttribute("aria-pressed", v === "bs"); $("pay-usdt").setAttribute("aria-pressed", v === "usdt");
+  $("recv-cur").innerHTML = v === "usdt" ? `<span class="usdt-ico" aria-hidden="true">₮</span>USDT` : FLAGS.ve + "Bs";
+  document.querySelectorAll(".bs-only").forEach(el => el.hidden = v === "usdt");
+  $("b-wallet-l").hidden = v !== "usdt";
+  lastEdited = "send"; animateNext = true; update();
+}
+if (usdtOK) {
+  $("payin").hidden = false;
+  $("pay-bs").addEventListener("click", () => setPay("bs"));
+  $("pay-usdt").addEventListener("click", () => setPay("usdt"));
+}
 
 /* PayPal: el cliente envía X; PayPal descuenta su comisión; se paga sobre lo que llega */
 const arrived = x => Math.max(0, x*(1-ppPct) - ppFix);
@@ -476,18 +511,19 @@ function update(){
     send = parseFloat($("send").value) || 0;
     net = c.id === "pp" ? arrived(send) : send;
     bs = net * rateFor(c, net);
-    if (animateNext && bs > 0) {
-      const from = parseFloat($("recv").value) || 0, to = bs;
+    const out = toOut(bs);
+    if (animateNext && out > 0) {
+      const from = parseFloat($("recv").value) || 0, to = out;
       tween(from, to, 550, (v, done) => { $("recv").value = (done ? to : v).toFixed(2); });
-    } else { tweenId++; $("recv").value = bs > 0 ? bs.toFixed(2) : ""; }
+    } else { tweenId++; $("recv").value = out > 0 ? out.toFixed(2) : ""; }
   } else {
-    bs = parseFloat($("recv").value) || 0;
+    bs = fromOut(parseFloat($("recv").value) || 0);
     net = hasTier(c) && bs/c.rateHigh >= c.minLocal ? bs/c.rateHigh : bs/c.rate;
     send = c.id === "pp" ? (bs > 0 ? toSend(net) : 0) : net;
     $("send").value = send > 0 ? send.toFixed(decOf(c)) : "";
   }
   const r = rateFor(c, net), pref = hasTier(c) && r === c.rateHigh;
-  $("rate-line").innerHTML = `<b class="${animateNext ? "pop" : ""}">${c.unit===1?"1":fmt(c.unit,0)} ${c.cur} = ${fmt(r*c.unit)} Bs</b>`;
+  $("rate-line").innerHTML = `<b class="${animateNext ? "pop" : ""}">${c.unit===1?"1":fmt(c.unit,0)} ${c.cur} = ${fmtOut(r*c.unit)} ${outU()}</b>`;
   animateNext = false;
   const tier = $("tier");
   if (!hasTier(c)) tier.hidden = true;
@@ -495,7 +531,7 @@ function update(){
     tier.hidden = false; tier.classList.toggle("on", pref);
     tier.innerHTML = pref
       ? `<b>Tasa preferencial aplicada</b><span>Por enviar desde ${fmt(D.tierMin,0)} $.</span>`
-      : `<b>Desde ${fmt(D.tierMin,0)} $ recibes más</b><span>${c.id==="pp"?"Si llegan":"Enviando"} ${fmt(c.minLocal, decOf(c))} ${c.cur} o más: ${c.unit===1?"1":fmt(c.unit,0)} ${c.cur} = ${fmt(c.rateHigh*c.unit)} Bs</span>`;
+      : `<b>Desde ${fmt(D.tierMin,0)} $ recibes más</b><span>${c.id==="pp"?"Si llegan":"Enviando"} ${fmt(c.minLocal, decOf(c))} ${c.cur} o más: ${c.unit===1?"1":fmt(c.unit,0)} ${c.cur} = ${fmtOut(c.rateHigh*c.unit)} ${outU()}</span>`;
   }
   const st = $("pp-steps");
   if (c.id === "pp" && send > 0) {
@@ -504,7 +540,7 @@ function update(){
       <div><span>Envías por PayPal</span><span>${fmt(send)} $</span></div>
       <div class="minus"><span>Comisión PayPal (${fmt(ppPct*100,1)}%${ppFix?` + ${fmt(ppFix)} $`:""})</span><span>−${fmt(send-net)} $</span></div>
       <div class="arrive"><span>Llega a PayPal</span><span>${fmt(net)} $</span></div>
-      <div><span>Recibe en Venezuela</span><span>${fmt(bs)} Bs</span></div>`;
+      <div><span>Recibe en Venezuela</span><span>${fmtOut(bs)} ${outU()}</span></div>`;
   } else st.hidden = true;
   const msg = quote(c, send, net, bs);
   $("wa").href = waText(msg);
@@ -514,8 +550,14 @@ function quote(c, send, net, bs){
   let s = `Hola ${brand || "InterLat"}, quiero enviar a Venezuela.\n${m.flag} Desde: ${m.name}\nEnvío: ${fmt(send, decOf(c))} ${c.cur}`;
   if (c.id === "pp") s += `\nLlega a PayPal: ${fmt(net)} $`;
   const r = net > 0 ? bs/net : c.rate;
-  s += `\nRecibe: ${fmt(bs)} Bs\nTasa: ${c.unit===1?"1":fmt(c.unit,0)} ${c.cur} = ${fmt(r*c.unit)} Bs${hasTier(c) && r === c.rateHigh ? " (preferencial)" : ""}`;
-  const b = [["Beneficiario","b-name"],["Cédula","b-ci"],["Banco","b-bank"],["Pago móvil","b-tel"],["Me recomendó","b-ref"]]
+  s += payIn === "usdt"
+    ? `\nRecibe: ${fmtOut(bs)} USDT (equivale a ${fmt(bs)} Bs)`
+    : `\nRecibe: ${fmt(bs)} Bs`;
+  s += `\nTasa: ${c.unit===1?"1":fmt(c.unit,0)} ${c.cur} = ${fmtOut(r*c.unit)} ${outU()}${hasTier(c) && r === c.rateHigh ? " (preferencial)" : ""}`;
+  const fields = payIn === "usdt"
+    ? [["Beneficiario","b-name"],["Binance Pay / billetera USDT","b-wallet"],["Me recomendó","b-ref"]]
+    : [["Beneficiario","b-name"],["Cédula","b-ci"],["Banco","b-bank"],["Pago móvil","b-tel"],["Me recomendó","b-ref"]];
+  const b = fields
     .map(([k,id]) => [k, $(id).value.trim()]).filter(([,v]) => v);
   if (b.length) s += "\n\n" + b.map(([k,v]) => `${k}: ${v}`).join("\n");
   return s + "\n\n¿Me confirmas la tasa y la cuenta para pagar?";
@@ -532,7 +574,7 @@ const eta = String(D.eta || "").trim(), hours = String(D.hours || "").trim();
 if (eta) { $("eta-pill").hidden = false; $("eta-pill").textContent = eta; $("faq-eta").textContent = `Tiempo estimado: ${eta}, después de confirmar tu pago.`; }
 if (hours) { $("hours-pill").hidden = false; $("hours-pill").textContent = hours; }
 if (ppPct) $("faq-pp").textContent = `PayPal descuenta ${fmt(ppPct*100,1)}%${ppFix?` + ${fmt(ppFix)} $`:""} al enviar. Pagamos en bolívares según el monto que llega a nuestra cuenta.`;
-["b-name","b-ci","b-bank","b-tel","b-ref"].forEach(id => $(id).addEventListener("input", update));
+["b-name","b-ci","b-bank","b-tel","b-ref","b-wallet"].forEach(id => $(id).addEventListener("input", update));
 $("send").addEventListener("input", () => { lastEdited = "send"; update(); });
 $("recv").addEventListener("input", () => { lastEdited = "recv"; update(); });
 if (!corr.length) { $("rate-line").textContent = "Tasas no disponibles"; return; }

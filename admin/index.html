@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Panel InterLat</title>
+<link rel="icon" type="image/png" href="../favicon.png?v=2">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Manrope:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Panel privado de tasas: tarjeta-billete con la tasa del día, tarjetas por país, barra fija para publicar */
+:root{
+  --bg:#F1F5F3; --surface:#FFFFFF; --surface-2:#F6F8F7; --ink:#0E1A33; --muted:#5A6878; --line:#DCE3EA;
+  --green:#2DA84A; --green-d:#118A44; --navy:#1B3A8A; --navy-d:#0C2F6E; --gold:#F2C230; --bad:#C2413B; --gain:#118A44; --soft:#E6EDF8;
+  --on-note:#F5FFF8; --on-note-dim:rgba(245,255,248,.75);
+  --f-display:"Montserrat","Segoe UI",system-ui,sans-serif; --f-body:"Manrope","Segoe UI",system-ui,sans-serif; --f-mono:"DM Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#08111F; --surface:#0F1A2C; --surface-2:#13213A; --ink:#E7EEF7; --muted:#90A0B4; --line:#1F2C42; --soft:#13283F; --gain:#5FD07A; --bad:#F07C76;
+  color-scheme:dark}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top,0px)}
+[hidden]{display:none!important}
+.wrap{max-width:980px;margin:0 auto;padding-block:18px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.15;font-weight:800}
+h1{font-size:1.25rem;text-transform:uppercase} h2{font-size:1rem;text-transform:uppercase;letter-spacing:.02em} h3{font-size:.95rem}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.small{font-size:.85rem} .muted{color:var(--muted)}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top img{width:52px;height:52px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px var(--surface)}
+.top .grow{flex:1;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.note{border-radius:18px;padding:18px;color:var(--on-note);display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;
+  background:repeating-radial-gradient(circle at 110% -10%,rgba(255,255,255,.06) 0 1px,transparent 1px 10px),linear-gradient(150deg,var(--green-d),var(--navy-d))}
+.note .label{color:var(--on-note-dim)}
+.big{font-family:var(--f-mono);font-size:2.3rem;line-height:1}
+.big small{font-size:.95rem;color:var(--on-note-dim)}
+.kv{display:flex;flex-wrap:wrap;gap:8px 20px}
+.kv div{display:flex;flex-direction:column}
+.kv .v{font-family:var(--f-mono);font-size:1.05rem}
+.seg{display:flex;background:rgba(0,0,0,.2);border-radius:11px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;border-radius:8px;background:transparent;color:var(--on-note-dim);font:inherit;font-weight:700;padding:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--on-note);color:var(--navy-d)}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+input{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%;min-width:0}
+input.num{font-family:var(--f-mono)}
+.note input{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.28);color:var(--on-note)}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--green-d)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:460px){.grid3{grid-template-columns:1fr 1fr}}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.head{display:flex;align-items:center;gap:10px}
+.flg{width:30px;height:20px;border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.14);flex:none}
+.code{margin-left:auto;font-family:var(--f-mono);font-size:.72rem;background:var(--soft);color:var(--navy);border-radius:6px;padding:2px 7px}
+.rate{font-family:var(--f-mono);font-size:1.5rem;line-height:1.1}
+.rate small{font-size:.8rem;color:var(--muted)}
+.rows{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:.85rem;margin:0}
+.rows dt{color:var(--muted)} .rows dd{margin:0;text-align:right;font-family:var(--f-mono)}
+.slider{display:flex;align-items:center;gap:10px}
+.slider input[type=range]{flex:1}
+.slider input.num{width:76px;flex:none}
+button.btn{font:inherit;font-weight:800;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 16px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+a.btn{font:inherit;font-weight:800;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 16px;text-decoration:none}
+.btn.primary{background:var(--green-d);border-color:var(--green-d);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.bar .in{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.bar .st{flex:1;min-width:0;font-size:.85rem;color:var(--muted)}
+.bar .st b{color:var(--ink)}
+.gate{min-height:100vh;display:grid;place-items:center;padding:20px}
+.gate .card{width:100%;max-width:400px;text-align:left}
+.gate img{width:76px;height:76px;border-radius:50%;align-self:center;background:#fff}
+.err{color:var(--bad);font-size:.88rem;font-weight:600}
+.ok{color:var(--gain);font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-weight:700;font-size:.9rem;z-index:9}
+@media (prefers-reduced-motion: no-preference){.card,.note{animation:up .45s cubic-bezier(.2,.8,.2,1) both}@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}}
+</style></head>
+<body>
+
+<!-- Acceso -->
+<section class="gate" id="gate">
+  <div class="card">
+    <img src="../logo.jpg" alt="InterLat">
+    <h1 style="text-align:center">Panel InterLat</h1>
+    <div id="login" hidden>
+      <form id="login-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="field"><label class="label" for="pass">Contraseña</label><input id="pass" type="password" autocomplete="current-password" required></div>
+        <button class="btn primary" type="submit" id="login-btn">Entrar</button>
+        <span class="err" id="login-err" hidden></span>
+      </form>
+    </div>
+    <div id="setup" hidden>
+      <p class="small muted" style="margin:0">Primera vez: pega tu token de GitHub y crea una contraseña. El token queda guardado cifrado con esa contraseña; solo quien la sepa podrá editar.</p>
+      <form id="setup-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="field"><label class="label" for="tok">Token de GitHub</label><input id="tok" type="password" autocomplete="off" required></div>
+        <div class="field"><label class="label" for="np1">Contraseña nueva (mínimo 10 caracteres)</label><input id="np1" type="password" autocomplete="new-password" minlength="10" required></div>
+        <div class="field"><label class="label" for="np2">Repite la contraseña</label><input id="np2" type="password" autocomplete="new-password" minlength="10" required></div>
+        <button class="btn primary" type="submit" id="setup-btn">Crear acceso</button>
+        <span class="err" id="setup-err" hidden></span>
+      </form>
+    </div>
+    <p class="small muted" id="gate-msg" style="margin:0;text-align:center">Cargando…</p>
+  </div>
+</section>
+
+<!-- Panel -->
+<main id="app" hidden>
+  <div class="wrap">
+    <div class="top">
+      <img src="../logo.jpg" alt="InterLat">
+      <div class="grow"><h1>Panel de tasas</h1><span class="small muted" id="pub-info">—</span></div>
+      <a class="btn" href="../" target="_blank" rel="noopener">Ver página</a>
+      <button class="btn" id="lock" type="button">Cerrar</button>
+    </div>
+
+    <div class="note">
+      <div class="kv">
+        <div><span class="label">USDT en uso</span><span class="big"><span id="u-use">—</span> <small>Bs</small></span></div>
+      </div>
+      <div class="kv">
+        <div><span class="label">alcambio · venta</span><span class="v" id="u-sell">—</span></div>
+        <div><span class="label">alcambio · compra</span><span class="v" id="u-buy">—</span></div>
+        <div><span class="label">Dólar BCV</span><span class="v" id="u-bcv">—</span></div>
+        <div><span class="label">Brecha</span><span class="v" id="u-gap">—</span></div>
+      </div>
+      <div class="seg" role="group" aria-label="Origen de la tasa">
+        <button type="button" id="m-auto" aria-pressed="true">Automática (alcambio)</button>
+        <button type="button" id="m-man" aria-pressed="false">Manual</button>
+      </div>
+      <div class="grid2">
+        <div class="field"><label class="label" for="man">Tasa manual Bs/USDT</label><input id="man" class="num" type="number" step="0.01" inputmode="decimal"></div>
+        <div class="field"><label class="label" for="spread">Pérdida venta P2P %</label><input id="spread" class="num" type="number" step="0.05" inputmode="decimal"></div>
+      </div>
+      <span class="small" style="color:var(--on-note-dim)">Automática: la página de clientes toma la tasa de alcambio en vivo cada vez que alguien la abre.</span>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+      <div class="card">
+        <h2>Tasa preferencial</h2>
+        <div class="grid2">
+          <div class="field"><label class="label" for="t-min">Desde (USD)</label><input id="t-min" class="num" type="number" step="50"></div>
+          <div class="field"><label class="label" for="t-bonus">Bajar margen (puntos %)</label><input id="t-bonus" class="num" type="number" step="0.25"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Negocio</h2>
+        <div class="grid2">
+          <div class="field"><label class="label" for="b-wa">WhatsApp</label><input id="b-wa" inputmode="tel"></div>
+          <div class="field"><label class="label" for="b-pp">Comisión PayPal %</label><input id="b-pp" class="num" type="number" step="0.1"></div>
+          <div class="field"><label class="label" for="b-hours">Horario</label><input id="b-hours" placeholder="Lun–Sáb 8 am – 8 pm"></div>
+          <div class="field"><label class="label" for="b-eta">Tiempo de entrega</label><input id="b-eta" placeholder="15 a 60 minutos"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bar"><div class="in">
+    <span class="st" id="st">Sin cambios</span>
+    <button class="btn primary" id="publish" type="button" disabled>Publicar cambios</button>
+  </div></div>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+const REPO = "CambiosInterLat/Tasas", BR = "main";
+const DEFAULTS = {
+  rateMode: "auto", manualUsdt: 0, spread: 0.3, tier: {min: 1000, bonus: 1}, paypalPct: 5.4, paypalFixed: 0,
+  brand: {name: "InterLat", whatsapp: "584249234587", hours: "", eta: ""},
+  corr: [
+    {id:"cop", name:"Colombia", cur:"COP", unit:1000, price:3300, fee:0, pp:0, margin:4},
+    {id:"pp",  name:"PayPal", cur:"USD", unit:1, price:1, fee:5, pp:0, margin:4},
+    {id:"clp", name:"Chile", cur:"CLP", unit:1000, price:990, fee:3, pp:0, margin:4},
+    {id:"brl", name:"Brasil", cur:"BRL", unit:1, price:5.21, fee:0, pp:0, margin:4},
+    {id:"usd", name:"Estados Unidos", cur:"USD", unit:1, price:0.98, fee:4, pp:0, margin:4}
+  ]
+};
+const $ = id => document.getElementById(id);
+const fmt = (n, d=2) => Number.isFinite(n) ? n.toLocaleString("es-VE",{minimumFractionDigits:d,maximumFractionDigits:d}) : "—";
+const clone = o => JSON.parse(JSON.stringify(o));
+const FLAGS = (() => {
+  const w = b => `<svg class="flg" viewBox="0 0 30 20" aria-hidden="true">${b}</svg>`;
+  let us = `<rect width="30" height="20" fill="#B22234"/>`;
+  for (let i = 1; i < 13; i += 2) us += `<rect y="${(i*20/13).toFixed(2)}" width="30" height="${(20/13).toFixed(2)}" fill="#fff"/>`;
+  us += `<rect width="12.4" height="${(7*20/13).toFixed(2)}" fill="#3C3B6E"/>`;
+  return { cop: w(`<rect width="30" height="10" fill="#FCD116"/><rect y="10" width="30" height="5" fill="#003893"/><rect y="15" width="30" height="5" fill="#CE1126"/>`),
+    clp: w(`<rect width="30" height="20" fill="#fff"/><rect y="10" width="30" height="10" fill="#D52B1E"/><rect width="10" height="10" fill="#0039A6"/><path d="M5 2.4l.9 2.8h2.9L6.5 6.9l.9 2.8L5 8 2.6 9.7l.9-2.8-2.4-1.7h2.9z" fill="#fff"/>`),
+    brl: w(`<rect width="30" height="20" fill="#009C3B"/><path d="M15 2.4 27.4 10 15 17.6 2.6 10z" fill="#FFDF00"/><circle cx="15" cy="10" r="4.6" fill="#002776"/>`),
+    usd: w(us), pp: w(`<rect width="30" height="20" fill="#003087"/><rect x="5" y="5" width="20" height="11" rx="2" fill="#0070E0"/><rect x="5" y="7.5" width="20" height="2.2" fill="#003087"/>`) };
+})();
+
+/* ---------- Cifrado (PBKDF2 + AES-GCM) ---------- */
+const enc = new TextEncoder(), dec = new TextDecoder();
+const b64 = buf => { const a = new Uint8Array(buf); let s = ""; for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function keyFrom(pass, salt){
+  const base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2", salt, iterations:310000, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+}
+async function seal(obj, pass){
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, await keyFrom(pass, salt), enc.encode(JSON.stringify(obj)));
+  return {v:1, salt:b64(salt), iv:b64(iv), ct:b64(ct)};
+}
+async function unseal(blob, pass){
+  const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:unb64(blob.iv)}, await keyFrom(pass, unb64(blob.salt)), unb64(blob.ct));
+  return JSON.parse(dec.decode(pt));
+}
+
+/* ---------- GitHub ---------- */
+let TOKEN = "", PASS = "";
+async function gh(path, method = "GET", body){
+  const url = `https://api.github.com/repos/${REPO}/contents/${path}` + (method === "GET" ? `?ref=${BR}&t=${Date.now()}` : "");
+  const r = await fetch(url, {method, cache:"no-store", headers:{Authorization:`Bearer ${TOKEN}`, Accept:"application/vnd.github+json", ...(body ? {"Content-Type":"application/json"} : {})}, body});
+  if (r.status === 404 && method === "GET") return null;
+  if (!r.ok) throw new Error(r.status === 401 ? "Token inválido o vencido" : r.status === 403 ? "El token no tiene permiso de escritura" : `GitHub respondió ${r.status}`);
+  return r.json();
+}
+const textOf = c => dec.decode(unb64(String(c.content || "").replace(/\s/g, "")));
+async function putText(path, text, message){
+  const cur = await gh(path);
+  const bytes = enc.encode(text);
+  const body = {message, branch:BR, content:b64(bytes)};
+  if (cur) body.sha = cur.sha;
+  return gh(path, "PUT", JSON.stringify(body));
+}
+
+/* ---------- Tasas en vivo ---------- */
+let live = {sell:0, buy:0, bcv:0, at:0};
+async function loadLive(){
+  try {
+    const r = await fetch("https://api.alcambio.app/graphql", {method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify({query:'query { getBinanceP2PAverages { sellAverage buyAverage updatedAt } getCountryConversions(payload:{countryCode:"VE"}) { conversionRates { baseValue official type rateCurrency { code } } } }'})});
+    const j = await r.json(), p = j.data.getBinanceP2PAverages, rates = j.data.getCountryConversions.conversionRates || [];
+    const usd = rates.filter(x => x.official && x.rateCurrency && x.rateCurrency.code === "USD");
+    const b = usd.find(x => x.type === "SECONDARY") || usd[0];
+    live = {sell:+p.sellAverage, buy:+p.buyAverage, bcv: b ? +b.baseValue : 0, at:+p.updatedAt};
+  } catch { live = {sell:0, buy:0, bcv:0, at:0}; }
+  render();
+}
+
+/* ---------- Estado ---------- */
+let S = clone(DEFAULTS), saved = "", lastPub = 0;
+const usdtInUse = () => S.rateMode === "manual" && S.manualUsdt > 0 ? S.manualUsdt : (live.sell || S.manualUsdt || 0);
+const factor = (c, m) => (1 - S.spread/100) * ((1 - c.pp/100)*(1 - c.fee/100) - m/100) / c.price;
+function buildConfig(){
+  const corr = S.corr.map(c => ({id:c.id, cur:c.cur, unit:c.unit,
+    k:+factor(c, c.margin).toPrecision(10), kHigh:+factor(c, Math.max(0, c.margin - S.tier.bonus)).toPrecision(10),
+    minLocal:+(S.tier.min * c.price).toFixed(2)})).filter(c => c.k > 0);
+  return {brand:S.brand.name, whatsapp:S.brand.whatsapp, hours:S.brand.hours, eta:S.brand.eta, tierMin:S.tier.min,
+    paypalPct:S.paypalPct, paypalFixed:S.paypalFixed, rateMode:S.rateMode, manualUsdt:S.manualUsdt,
+    lastUsdt:usdtInUse(), lastBcv:live.bcv || 0, updatedAt:Date.now(), corr};
+}
+const dirty = () => JSON.stringify(S) !== saved;
+
+function render(){
+  const u = usdtInUse();
+  $("u-use").textContent = fmt(u); $("u-sell").textContent = fmt(live.sell); $("u-buy").textContent = fmt(live.buy);
+  $("u-bcv").textContent = live.bcv ? fmt(live.bcv) : "—"; $("u-gap").textContent = live.bcv && u ? fmt((u/live.bcv - 1)*100, 1) + "%" : "—";
+  $("m-auto").setAttribute("aria-pressed", S.rateMode !== "manual"); $("m-man").setAttribute("aria-pressed", S.rateMode === "manual");
+  $("board").querySelectorAll("[data-out]").forEach(el => {
+    const c = S.corr.find(x => x.id === el.dataset.out), r = u*factor(c, c.margin), rh = u*factor(c, Math.max(0, c.margin - S.tier.bonus));
+    el.innerHTML = `<div><span class="label">Tasa cliente · ${c.unit===1?"1":fmt(c.unit,0)} ${c.cur}</span><div class="rate">${fmt(r*c.unit)} <small>Bs</small></div></div>
+      <dl class="rows"><dt>Tasa mercado</dt><dd>${fmt(u/c.price*c.unit)}</dd>
+      <dt>Desde ${fmt(S.tier.min,0)} $</dt><dd>${fmt(rh*c.unit)}</dd>
+      <dt>Ganas por cada 100 $</dt><dd style="color:var(--gain)">${fmt(c.margin)} USDT</dd></dl>`;
+  });
+  const d = dirty();
+  $("publish").disabled = !d;
+  $("st").innerHTML = d ? "<b>Cambios sin publicar</b>" : (lastPub ? `Publicado ${new Date(lastPub).toLocaleString("es-VE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}` : "Sin cambios");
+  $("pub-info").textContent = lastPub ? `Última publicación: ${new Date(lastPub).toLocaleString("es-VE")}` : "Aún sin publicar desde este panel";
+}
+function buildBoard(){
+  $("board").innerHTML = S.corr.map(c => `<div class="card">
+    <div class="head">${FLAGS[c.id]||""}<h3>${c.name}</h3><span class="code">${c.cur}→VES</span></div>
+    <div data-out="${c.id}"></div>
+    <div class="field"><span class="label">Tu margen %</span><div class="slider"><input type="range" min="0" max="15" step="0.25" value="${c.margin}" data-c="${c.id}" data-k="margin" aria-label="Margen ${c.name}"><input class="num" type="number" step="0.25" value="${c.margin}" data-c="${c.id}" data-k="margin" aria-label="Margen ${c.name}"></div></div>
+    <div class="grid2">
+      <div class="field"><label class="label">1 USDT en ${c.cur}</label><input class="num" type="number" step="any" value="${c.price}" data-c="${c.id}" data-k="price"></div>
+      <div class="field"><label class="label">Comisión proveedor %</label><input class="num" type="number" step="0.1" value="${c.fee}" data-c="${c.id}" data-k="fee"></div>
+    </div></div>`).join("");
+  $("board").querySelectorAll("input[data-c]").forEach(inp => inp.addEventListener("input", e => {
+    const c = S.corr.find(x => x.id === e.target.dataset.c), k = e.target.dataset.k, v = parseFloat(e.target.value);
+    if (!Number.isFinite(v)) return;
+    c[k] = v;
+    $("board").querySelectorAll(`input[data-c="${c.id}"][data-k="${k}"]`).forEach(o => { if (o !== e.target) o.value = v; });
+    render();
+  }));
+}
+function fillFields(){
+  $("man").value = S.manualUsdt || ""; $("spread").value = S.spread;
+  $("t-min").value = S.tier.min; $("t-bonus").value = S.tier.bonus;
+  $("b-wa").value = S.brand.whatsapp; $("b-pp").value = S.paypalPct; $("b-hours").value = S.brand.hours; $("b-eta").value = S.brand.eta;
+}
+const bindNum = (id, set) => $(id).addEventListener("input", e => { const v = parseFloat(e.target.value); set(Number.isFinite(v) ? v : 0); render(); });
+const bindTxt = (id, set) => $(id).addEventListener("input", e => { set(e.target.value.trim()); render(); });
+bindNum("man", v => { S.manualUsdt = v; }); bindNum("spread", v => { S.spread = v; });
+bindNum("t-min", v => { S.tier.min = v; }); bindNum("t-bonus", v => { S.tier.bonus = v; }); bindNum("b-pp", v => { S.paypalPct = v; });
+bindTxt("b-wa", v => { S.brand.whatsapp = v.replace(/\D/g, ""); }); bindTxt("b-hours", v => { S.brand.hours = v; }); bindTxt("b-eta", v => { S.brand.eta = v; });
+$("m-auto").addEventListener("click", () => { S.rateMode = "auto"; render(); });
+$("m-man").addEventListener("click", () => { S.rateMode = "manual"; if (!S.manualUsdt) { S.manualUsdt = live.sell || 0; $("man").value = S.manualUsdt; } render(); });
+
+/* ---------- Publicar ---------- */
+$("publish").addEventListener("click", async () => {
+  if (S.rateMode === "manual" && !(S.manualUsdt > 0)) { toast("Escribe la tasa manual antes de publicar"); return; }
+  const btn = $("publish"); btn.disabled = true; $("st").innerHTML = "<b>Publicando…</b>";
+  try {
+    const blob = await seal({token: TOKEN, settings: S}, PASS);
+    await putText("secure.json", JSON.stringify(blob), "Ajustes cifrados del panel");
+    await putText("config.json", JSON.stringify(buildConfig()), "Tasas publicadas desde el panel");
+    saved = JSON.stringify(S); lastPub = Date.now();
+    toast("Publicado. Los clientes lo verán en 1–2 minutos.");
+  } catch (e) { toast("No se pudo publicar: " + e.message); }
+  render();
+});
+window.addEventListener("beforeunload", e => { if (TOKEN && dirty()) { e.preventDefault(); e.returnValue = ""; } });
+
+/* ---------- Acceso ---------- */
+let blob = null;
+async function boot(){
+  try {
+    const r = await fetch("../secure.json?t=" + Date.now(), {cache:"no-store"});
+    blob = r.ok ? await r.json() : null;
+  } catch { blob = null; }
+  $("gate-msg").hidden = true;
+  if (blob && blob.ct) { $("login").hidden = false; $("pass").focus(); } else { $("setup").hidden = false; }
+}
+function enter(settings, pub){
+  S = Object.assign(clone(DEFAULTS), settings || {});
+  S.tier = Object.assign({}, DEFAULTS.tier, (settings || {}).tier || {});
+  S.brand = Object.assign({}, DEFAULTS.brand, (settings || {}).brand || {});
+  S.corr = DEFAULTS.corr.map(d => Object.assign({}, d, ((settings || {}).corr || []).find(x => x.id === d.id) || {}));
+  saved = JSON.stringify(S); lastPub = pub || 0;
+  $("gate").hidden = true; $("app").hidden = false;
+  buildBoard(); fillFields(); render(); loadLive();
+}
+$("login-form").addEventListener("submit", async e => {
+  e.preventDefault(); $("login-err").hidden = true; $("login-btn").disabled = true; $("login-btn").textContent = "Verificando…";
+  try {
+    const data = await unseal(blob, $("pass").value);
+    TOKEN = data.token; PASS = $("pass").value; $("pass").value = "";
+    // La copia más reciente (la web publica con hasta 10 min de retraso)
+    let settings = data.settings, pub = 0;
+    try { const f = await gh("secure.json"); if (f) { const fresh = await unseal(JSON.parse(textOf(f)), PASS); settings = fresh.settings; } } catch {}
+    try { const c = await gh("config.json"); if (c) pub = (JSON.parse(textOf(c)).updatedAt) || 0; } catch {}
+    enter(settings, pub);
+  } catch {
+    $("login-err").textContent = "Contraseña incorrecta."; $("login-err").hidden = false;
+  }
+  $("login-btn").disabled = false; $("login-btn").textContent = "Entrar";
+});
+$("setup-form").addEventListener("submit", async e => {
+  e.preventDefault(); const err = $("setup-err"); err.hidden = true;
+  const t = $("tok").value.trim(), p1 = $("np1").value, p2 = $("np2").value;
+  if (p1.length < 10) { err.textContent = "La contraseña debe tener al menos 10 caracteres."; err.hidden = false; return; }
+  if (p1 !== p2) { err.textContent = "Las contraseñas no coinciden."; err.hidden = false; return; }
+  $("setup-btn").disabled = true; $("setup-btn").textContent = "Creando…";
+  try {
+    TOKEN = t; PASS = p1;
+    await gh("index.html");
+    const settings = clone(DEFAULTS);
+    await putText("secure.json", JSON.stringify(await seal({token:TOKEN, settings}, PASS)), "Crea acceso cifrado del panel");
+    S = settings;
+    await putText("config.json", JSON.stringify(buildConfig()), "Tasas iniciales");
+    $("tok").value = $("np1").value = $("np2").value = "";
+    enter(settings, Date.now());
+    toast("Acceso creado. Guarda bien tu contraseña.");
+  } catch (ex) { TOKEN = PASS = ""; err.textContent = ex.message; err.hidden = false; }
+  $("setup-btn").disabled = false; $("setup-btn").textContent = "Crear acceso";
+});
+$("lock").addEventListener("click", () => { if (dirty()) { toast("Tienes cambios sin publicar. Publica o vuelve a pulsar Cerrar."); if (!$("lock").dataset.armed) { $("lock").dataset.armed = "1"; return; } } TOKEN = PASS = ""; location.reload(); });
+
+let tt; function toast(m){ const t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 3200); }
+boot();
+})();
+</script>
+</body></html>

@@ -266,7 +266,7 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
     <div class="calc-body" id="calc-body">
     <label class="amt" for="send">
       <span class="label" id="send-lbl">Tú envías</span>
-      <span class="amt-row"><input id="send" type="number" inputmode="decimal" step="any" min="0"><span class="cur" id="send-cur">COP</span></span>
+      <span class="amt-row"><input id="send" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done"><span class="cur" id="send-cur">COP</span></span>
     </label>
 
     <div class="steps-pp" id="pp-steps" hidden></div>
@@ -281,7 +281,7 @@ footer{font-size:.78rem;color:var(--muted);text-align:center}
 
     <label class="amt" for="recv">
       <span class="label">Tu familiar recibe</span>
-      <span class="amt-row"><input id="recv" type="number" inputmode="decimal" step="any" min="0"><span class="cur" id="recv-cur">Bs</span></span>
+      <span class="amt-row"><input id="recv" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done"><span class="cur" id="recv-cur">Bs</span></span>
     </label>
     </div>
 
@@ -465,6 +465,10 @@ const toSend = y => (y + ppFix)/(1-ppPct);
 const hasTier = c => c.rateHigh > c.rate && c.minLocal > 0;
 const rateFor = (c, net) => hasTier(c) && net >= c.minLocal ? c.rateHigh : c.rate;
 
+/* Montos: acepta coma o punto decimal (teclado del iPhone usa coma) y punto de miles: "10.000" = 10000, "8.712,10" = 8712.1 */
+const num = v => { let s = String(v || "").replace(/[\s$]/g, ""); if (!s) return 0;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", "."); else if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  const n = parseFloat(s); return Number.isFinite(n) && n > 0 ? n : 0; };
 function base(c){ return c.id === "pp" ? 100 : c.unit === 1000 ? (c.cur === "COP" ? 400000 : 100000) : 100; }
 /* Animaciones: deslizamiento al cambiar de país y conteo de Bs */
 const reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -498,8 +502,7 @@ function select(id){
   animateNext = prevIdx !== idx;
   $("send-cur").innerHTML = FLAGS[cur.id] + cur.cur;
   $("send-lbl").textContent = cur.id === "pp" ? "Tú envías por PayPal" : "Tú envías";
-  $("send").step = decOf(cur) ? "0.01" : "1";
-  $("send").value = base(cur); lastEdited = "send";
+  $("send").value = fmt(base(cur), decOf(cur)); lastEdited = "send";
   $("fine").textContent = cur.id === "pp"
     ? `PayPal cobra ${fmt(ppPct*100,1)}%${ppFix?` + ${fmt(ppFix)} $`:""} al enviar. Pagamos según lo que llega a nuestra cuenta PayPal.`
     : "Pago móvil o transferencia a cualquier banco venezolano.";
@@ -509,19 +512,19 @@ function update(){
   const c = cur; if (!c) return;
   let send, net, bs;
   if (lastEdited === "send") {
-    send = parseFloat($("send").value) || 0;
+    send = num($("send").value);
     net = c.id === "pp" ? arrived(send) : send;
     bs = net * rateFor(c, net);
     const out = toOut(bs);
     if (animateNext && out > 0) {
-      const from = parseFloat($("recv").value) || 0, to = out;
-      tween(from, to, 550, (v, done) => { $("recv").value = (done ? to : v).toFixed(2); });
-    } else { tweenId++; $("recv").value = out > 0 ? out.toFixed(2) : ""; }
+      const from = num($("recv").value), to = out;
+      tween(from, to, 550, (v, done) => { $("recv").value = fmt(done ? to : v, 2); });
+    } else { tweenId++; $("recv").value = out > 0 ? fmt(out, 2) : ""; }
   } else {
-    bs = fromOut(parseFloat($("recv").value) || 0);
+    bs = fromOut(num($("recv").value));
     net = hasTier(c) && bs/c.rateHigh >= c.minLocal ? bs/c.rateHigh : bs/c.rate;
     send = c.id === "pp" ? (bs > 0 ? toSend(net) : 0) : net;
-    $("send").value = send > 0 ? send.toFixed(decOf(c)) : "";
+    $("send").value = send > 0 ? fmt(send, decOf(c)) : "";
   }
   const r = rateFor(c, net), pref = hasTier(c) && r === c.rateHigh;
   $("rate-line").innerHTML = `<b class="${animateNext ? "pop" : ""}">${c.unit===1?"1":fmt(c.unit,0)} ${c.cur} = ${fmtOut(r*c.unit)} ${outU()}</b>`;

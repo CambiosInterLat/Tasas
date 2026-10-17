@@ -132,8 +132,8 @@ a.btn{font:inherit;font-weight:800;border-radius:12px;border:1px solid var(--lin
         <button type="button" id="m-man" aria-pressed="false">Manual</button>
       </div>
       <div class="grid2">
-        <div class="field"><label class="label" for="man">Tasa manual Bs/USDT</label><input id="man" class="num" type="number" step="0.01" inputmode="decimal"></div>
-        <div class="field"><label class="label" for="spread">Pérdida venta P2P %</label><input id="spread" class="num" type="number" step="0.05" inputmode="decimal"></div>
+        <div class="field"><label class="label" for="man">Tasa manual Bs/USDT</label><input id="man" class="num" type="text" step="0.01" inputmode="decimal"></div>
+        <div class="field"><label class="label" for="spread">Pérdida venta P2P %</label><input id="spread" class="num" type="text" step="0.05" inputmode="decimal"></div>
       </div>
       <span class="small" style="color:var(--on-note-dim)">Automática: la página de clientes toma la tasa de alcambio en vivo cada vez que alguien la abre.</span>
     </div>
@@ -144,15 +144,16 @@ a.btn{font:inherit;font-weight:800;border-radius:12px;border:1px solid var(--lin
       <div class="card">
         <h2>Tasa preferencial</h2>
         <div class="grid2">
-          <div class="field"><label class="label" for="t-min">Desde (USD)</label><input id="t-min" class="num" type="number" step="50"></div>
-          <div class="field"><label class="label" for="t-bonus">Bajar margen (puntos %)</label><input id="t-bonus" class="num" type="number" step="0.25"></div>
+          <div class="field"><label class="label" for="t-min">Desde (USD)</label><input id="t-min" class="num" type="text" inputmode="decimal" step="50"></div>
+          <div class="field"><label class="label" for="t-bonus">Bajar margen (puntos %)</label><input id="t-bonus" class="num" type="text" inputmode="decimal" step="0.25"></div>
         </div>
       </div>
       <div class="card">
         <h2>Negocio</h2>
         <div class="grid2">
           <div class="field"><label class="label" for="b-wa">WhatsApp</label><input id="b-wa" inputmode="tel"></div>
-          <div class="field"><label class="label" for="b-pp">Comisión PayPal %</label><input id="b-pp" class="num" type="number" step="0.1"></div>
+          <div class="field"><label class="label" for="b-pp">Comisión PayPal %</label><input id="b-pp" class="num" type="text" inputmode="decimal" step="0.1"></div>
+          <div class="field"><label class="label" for="b-ppfix">Cargo fijo PayPal $</label><input id="b-ppfix" class="num" type="text" inputmode="decimal"></div>
           <div class="field"><label class="label" for="b-hours">Horario</label><input id="b-hours" placeholder="Lun–Sáb 8 am – 8 pm"></div>
           <div class="field"><label class="label" for="b-eta">Tiempo de entrega</label><input id="b-eta" placeholder="15 a 60 minutos"></div>
         </div>
@@ -171,7 +172,7 @@ a.btn{font:inherit;font-weight:800;border-radius:12px;border:1px solid var(--lin
 (() => {
 const REPO = "CambiosInterLat/Tasas", BR = "main";
 const DEFAULTS = {
-  rateMode: "auto", manualUsdt: 0, usdtPayout: true, spread: 0.3, tier: {min: 1000, bonus: 1}, paypalPct: 5.4, paypalFixed: 0,
+  rateMode: "auto", manualUsdt: 0, usdtPayout: true, spread: 0.3, tier: {min: 1000, bonus: 1}, paypalPct: 5.4, paypalFixed: 0.3,
   brand: {name: "InterLat", whatsapp: "584249234587", hours: "", eta: ""},
   corr: [
     {id:"cop", name:"Colombia", cur:"COP", unit:1000, price:3300, fee:0, pp:0, margin:4},
@@ -276,13 +277,13 @@ function buildBoard(){
   $("board").innerHTML = S.corr.map(c => `<div class="card">
     <div class="head">${FLAGS[c.id]||""}<h3>${c.name}</h3><span class="code">${c.cur}→VES</span></div>
     <div data-out="${c.id}"></div>
-    <div class="field"><span class="label">Tu margen %</span><div class="slider"><input type="range" min="0" max="15" step="0.25" value="${c.margin}" data-c="${c.id}" data-k="margin" aria-label="Margen ${c.name}"><input class="num" type="number" step="0.25" value="${c.margin}" data-c="${c.id}" data-k="margin" aria-label="Margen ${c.name}"></div></div>
+    <div class="field"><span class="label">Tu margen %</span><div class="slider"><input type="range" min="0" max="15" step="0.25" value="${c.margin}" data-c="${c.id}" data-k="margin" aria-label="Margen ${c.name}"><input class="num" type="text" inputmode="decimal" step="0.25" value="${c.margin}" data-c="${c.id}" data-k="margin" aria-label="Margen ${c.name}"></div></div>
     <div class="grid2">
-      <div class="field"><label class="label">1 USDT en ${c.cur}</label><input class="num" type="number" step="any" value="${c.price}" data-c="${c.id}" data-k="price"></div>
-      <div class="field"><label class="label">Comisión proveedor %</label><input class="num" type="number" step="0.1" value="${c.fee}" data-c="${c.id}" data-k="fee"></div>
+      <div class="field"><label class="label">1 USDT en ${c.cur}</label><input class="num" type="text" inputmode="decimal" step="any" value="${c.price}" data-c="${c.id}" data-k="price"></div>
+      <div class="field"><label class="label">Comisión proveedor %</label><input class="num" type="text" inputmode="decimal" step="0.1" value="${c.fee}" data-c="${c.id}" data-k="fee"></div>
     </div></div>`).join("");
   $("board").querySelectorAll("input[data-c]").forEach(inp => inp.addEventListener("input", e => {
-    const c = S.corr.find(x => x.id === e.target.dataset.c), k = e.target.dataset.k, v = parseFloat(e.target.value);
+    const c = S.corr.find(x => x.id === e.target.dataset.c), k = e.target.dataset.k, v = num(e.target.value);
     if (!Number.isFinite(v)) return;
     c[k] = v;
     $("board").querySelectorAll(`input[data-c="${c.id}"][data-k="${k}"]`).forEach(o => { if (o !== e.target) o.value = v; });
@@ -292,12 +293,16 @@ function buildBoard(){
 function fillFields(){
   $("man").value = S.manualUsdt || ""; $("spread").value = S.spread;
   $("t-min").value = S.tier.min; $("t-bonus").value = S.tier.bonus;
-  $("b-usdt").checked = S.usdtPayout !== false; $("b-wa").value = S.brand.whatsapp; $("b-pp").value = S.paypalPct; $("b-hours").value = S.brand.hours; $("b-eta").value = S.brand.eta;
+  $("b-usdt").checked = S.usdtPayout !== false; $("b-wa").value = S.brand.whatsapp; $("b-pp").value = S.paypalPct; $("b-ppfix").value = S.paypalFixed; $("b-hours").value = S.brand.hours; $("b-eta").value = S.brand.eta;
 }
-const bindNum = (id, set) => $(id).addEventListener("input", e => { const v = parseFloat(e.target.value); set(Number.isFinite(v) ? v : 0); render(); });
+/* Montos: acepta coma o punto decimal (teclado del iPhone usa coma) y punto de miles: "10.000" = 10000, "8.712,10" = 8712.1 */
+const num = v => { let s = String(v || "").replace(/[\s$]/g, ""); if (!s) return 0;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", "."); else if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  const n = parseFloat(s); return Number.isFinite(n) && n > 0 ? n : 0; };
+const bindNum = (id, set) => $(id).addEventListener("input", e => { const v = num(e.target.value); set(Number.isFinite(v) ? v : 0); render(); });
 const bindTxt = (id, set) => $(id).addEventListener("input", e => { set(e.target.value.trim()); render(); });
 bindNum("man", v => { S.manualUsdt = v; }); bindNum("spread", v => { S.spread = v; });
-bindNum("t-min", v => { S.tier.min = v; }); bindNum("t-bonus", v => { S.tier.bonus = v; }); bindNum("b-pp", v => { S.paypalPct = v; });
+bindNum("t-min", v => { S.tier.min = v; }); bindNum("t-bonus", v => { S.tier.bonus = v; }); bindNum("b-pp", v => { S.paypalPct = v; }); bindNum("b-ppfix", v => { S.paypalFixed = v; });
 bindTxt("b-wa", v => { S.brand.whatsapp = v.replace(/\D/g, ""); }); bindTxt("b-hours", v => { S.brand.hours = v; }); bindTxt("b-eta", v => { S.brand.eta = v; });
 $("b-usdt").addEventListener("change", e => { S.usdtPayout = e.target.checked; render(); });
 $("m-auto").addEventListener("click", () => { S.rateMode = "auto"; render(); });
@@ -334,6 +339,7 @@ function enter(settings, pub){
   S.tier = Object.assign({}, DEFAULTS.tier, (settings || {}).tier || {});
   S.brand = Object.assign({}, DEFAULTS.brand, (settings || {}).brand || {});
   S.corr = DEFAULTS.corr.map(d => Object.assign({}, d, ((settings || {}).corr || []).find(x => x.id === d.id) || {}));
+  if (S.ppFixV !== 1) { S.paypalFixed = 0.3; S.ppFixV = 1; }
   saved = JSON.stringify(S); lastPub = pub || 0;
   $("gate").hidden = true; $("app").hidden = false;
   buildBoard(); fillFields(); render(); loadLive();

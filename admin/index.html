@@ -156,6 +156,7 @@ a.btn{font:inherit;font-weight:800;border-radius:12px;border:1px solid var(--lin
           <div class="field"><label class="label" for="b-hours">Horario</label><input id="b-hours" placeholder="Lun–Sáb 8 am – 8 pm"></div>
           <div class="field"><label class="label" for="b-eta">Tiempo de entrega</label><input id="b-eta" placeholder="15 a 60 minutos"></div>
         </div>
+        <label class="small" for="b-usdt" style="display:flex;gap:8px;align-items:center;font-weight:700"><input type="checkbox" id="b-usdt" style="width:auto;accent-color:var(--green-d)"> Ofrecer pago al beneficiario en USDT</label>
       </div>
     </div>
   </div>
@@ -170,7 +171,7 @@ a.btn{font:inherit;font-weight:800;border-radius:12px;border:1px solid var(--lin
 (() => {
 const REPO = "CambiosInterLat/Tasas", BR = "main";
 const DEFAULTS = {
-  rateMode: "auto", manualUsdt: 0, spread: 0.3, tier: {min: 1000, bonus: 1}, paypalPct: 5.4, paypalFixed: 0,
+  rateMode: "auto", manualUsdt: 0, usdtPayout: true, spread: 0.3, tier: {min: 1000, bonus: 1}, paypalPct: 5.4, paypalFixed: 0,
   brand: {name: "InterLat", whatsapp: "584249234587", hours: "", eta: ""},
   corr: [
     {id:"cop", name:"Colombia", cur:"COP", unit:1000, price:3300, fee:0, pp:0, margin:4},
@@ -253,7 +254,7 @@ function buildConfig(){
     k:+factor(c, c.margin).toPrecision(10), kHigh:+factor(c, Math.max(0, c.margin - S.tier.bonus)).toPrecision(10),
     minLocal:+(S.tier.min * c.price).toFixed(2)})).filter(c => c.k > 0);
   return {brand:S.brand.name, whatsapp:S.brand.whatsapp, hours:S.brand.hours, eta:S.brand.eta, tierMin:S.tier.min,
-    paypalPct:S.paypalPct, paypalFixed:S.paypalFixed, rateMode:S.rateMode, manualUsdt:S.manualUsdt,
+    paypalPct:S.paypalPct, paypalFixed:S.paypalFixed, usdtPayout:S.usdtPayout !== false, rateMode:S.rateMode, manualUsdt:S.manualUsdt,
     lastUsdt:usdtInUse(), lastBcv:live.bcv || 0, updatedAt:Date.now(), corr};
 }
 const dirty = () => JSON.stringify(S) !== saved;
@@ -295,13 +296,14 @@ function buildBoard(){
 function fillFields(){
   $("man").value = S.manualUsdt || ""; $("spread").value = S.spread;
   $("t-min").value = S.tier.min; $("t-bonus").value = S.tier.bonus;
-  $("b-wa").value = S.brand.whatsapp; $("b-pp").value = S.paypalPct; $("b-hours").value = S.brand.hours; $("b-eta").value = S.brand.eta;
+  $("b-usdt").checked = S.usdtPayout !== false; $("b-wa").value = S.brand.whatsapp; $("b-pp").value = S.paypalPct; $("b-hours").value = S.brand.hours; $("b-eta").value = S.brand.eta;
 }
 const bindNum = (id, set) => $(id).addEventListener("input", e => { const v = parseFloat(e.target.value); set(Number.isFinite(v) ? v : 0); render(); });
 const bindTxt = (id, set) => $(id).addEventListener("input", e => { set(e.target.value.trim()); render(); });
 bindNum("man", v => { S.manualUsdt = v; }); bindNum("spread", v => { S.spread = v; });
 bindNum("t-min", v => { S.tier.min = v; }); bindNum("t-bonus", v => { S.tier.bonus = v; }); bindNum("b-pp", v => { S.paypalPct = v; });
 bindTxt("b-wa", v => { S.brand.whatsapp = v.replace(/\D/g, ""); }); bindTxt("b-hours", v => { S.brand.hours = v; }); bindTxt("b-eta", v => { S.brand.eta = v; });
+$("b-usdt").addEventListener("change", e => { S.usdtPayout = e.target.checked; render(); });
 $("m-auto").addEventListener("click", () => { S.rateMode = "auto"; render(); });
 $("m-man").addEventListener("click", () => { S.rateMode = "manual"; if (!S.manualUsdt) { S.manualUsdt = live.sell || 0; $("man").value = S.manualUsdt; } render(); });
 

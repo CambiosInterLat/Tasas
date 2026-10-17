@@ -64,7 +64,7 @@ header p{margin:0;font-size:.82rem;color:var(--muted)}
 #rate-line b.pop{animation:pop .38s ease-out}
 .rate{animation:inR .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*70ms)}
 #upd::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:7px;vertical-align:1px;animation:pulse 2s infinite}
-@media (prefers-reduced-motion: reduce){.slide-r,.slide-l,.rate,#rate-line b.pop,#upd::before{animation:none}}
+
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;display:flex;align-items:center;gap:6px;border-radius:99px;border:1px solid var(--field-line);background:transparent;color:var(--on-note);padding:7px 13px;font:inherit;font-size:.88rem;font-weight:600;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--on-note);color:var(--note-b);border-color:var(--on-note)}
@@ -219,16 +219,20 @@ header{animation:fadeUp .6s cubic-bezier(.2,.8,.2,1) both}
 @supports (animation-timeline: view()) {
   .wrap > section, .wrap > footer{animation:rise linear both;animation-timeline:view();animation-range:entry 0% entry 35%}
 }
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+/* Movimiento reducido (p. ej. Windows con animaciones desactivadas): solo desvanecidos suaves, sin desplazamientos, brillos ni pulsos */
 @media (prefers-reduced-motion: reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
-  .draw{stroke-dashoffset:0}
+  html{scroll-behavior:auto}
+  .slide-r,.slide-l,header,.tagline,.note,.logo-img,.rate,#rate-line b.pop,.wrap > section,.wrap > footer{animation-name:fadeIn!important}
+  .note::before,.btn.wa::after,.fab::after,#upd::before{animation:none!important}
+  .chip:active,.chev:not(:disabled):active,.values div:hover,.fab:hover,.logo-wrap:hover{transform:none}
 }
 footer{font-size:.78rem;color:var(--muted);text-align:center}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-weight:600;font-size:.9rem;z-index:5}
 @media (prefers-reduced-motion: no-preference){.chip,.btn{transition:transform .12s, background .15s}.btn:active{transform:scale(.98)}}
 </style>
 
-<script id="rates-data" type="application/json">{"brand":"InterLat","whatsapp":"584249234587","hours":"","eta":"","updatedAt":1792199726402,"usdt":1003.39,"bcv":880.1159,"tierMin":1000,"paypalPct":5.4,"paypalFixed":0,"history":[{"d":"2026-10-16","usdt":1003.39,"bcv":880.12}],"corr":[{"id":"cop","cur":"COP","unit":1000,"rate":0.29102,"rateHigh":0.294051,"minLocal":3300000},{"id":"pp","cur":"USD","unit":1,"rate":910.345645,"rateHigh":920.349444,"minLocal":1000},{"id":"clp","cur":"CLP","unit":1000,"rate":0.939751,"rateHigh":0.949856,"minLocal":990000},{"id":"brl","cur":"BRL","unit":1,"rate":184.331024,"rateHigh":186.251139,"minLocal":5210},{"id":"usd","cur":"USD","unit":1,"rate":939.132085,"rateHigh":949.340043,"minLocal":980}]}</script>
+<script id="rates-data" type="application/json">{"brand":"InterLat","whatsapp":"584249234587","hours":"","eta":"","updatedAt":1792200851680,"usdt":1003.39,"bcv":880.1159,"tierMin":1000,"paypalPct":5.4,"paypalFixed":0,"history":[{"d":"2026-10-16","usdt":1003.39,"bcv":880.12}],"corr":[{"id":"cop","cur":"COP","unit":1000,"rate":0.29102,"rateHigh":0.294051,"minLocal":3300000},{"id":"pp","cur":"USD","unit":1,"rate":910.345645,"rateHigh":920.349444,"minLocal":1000},{"id":"clp","cur":"CLP","unit":1000,"rate":0.939751,"rateHigh":0.949856,"minLocal":990000},{"id":"brl","cur":"BRL","unit":1,"rate":184.331024,"rateHigh":186.251139,"minLocal":5210},{"id":"usd","cur":"USD","unit":1,"rate":939.132085,"rateHigh":949.340043,"minLocal":980}]}</script>
 
 <div class="wrap">
   <header>
@@ -424,7 +428,7 @@ function select(id){
   cur = corr.find(c => c.id === id) || cur;
   const idx = corr.indexOf(cur);
   renderChips();
-  if (prevIdx !== idx && !reduce) {
+  if (prevIdx !== idx) {
     const b = $("calc-body"); b.classList.remove("slide-r","slide-l"); void b.offsetWidth; b.classList.add(idx > prevIdx ? "slide-r" : "slide-l");
   }
   animateNext = prevIdx !== idx;
@@ -444,7 +448,7 @@ function update(){
     send = parseFloat($("send").value) || 0;
     net = c.id === "pp" ? arrived(send) : send;
     bs = net * rateFor(c, net);
-    if (animateNext && !reduce && bs > 0) {
+    if (animateNext && bs > 0) {
       const from = parseFloat($("recv").value) || 0, to = bs;
       tween(from, to, 550, (v, done) => { $("recv").value = (done ? to : v).toFixed(2); });
     } else { tweenId++; $("recv").value = bs > 0 ? bs.toFixed(2) : ""; }
@@ -455,7 +459,7 @@ function update(){
     $("send").value = send > 0 ? send.toFixed(decOf(c)) : "";
   }
   const r = rateFor(c, net), pref = hasTier(c) && r === c.rateHigh;
-  $("rate-line").innerHTML = `<b class="${animateNext && !reduce ? "pop" : ""}">${c.unit===1?"1":fmt(c.unit,0)} ${c.cur} = ${fmt(r*c.unit)} Bs</b>`;
+  $("rate-line").innerHTML = `<b class="${animateNext ? "pop" : ""}">${c.unit===1?"1":fmt(c.unit,0)} ${c.cur} = ${fmt(r*c.unit)} Bs</b>`;
   animateNext = false;
   const tier = $("tier");
   if (!hasTier(c)) tier.hidden = true;

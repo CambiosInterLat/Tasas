@@ -271,19 +271,18 @@ function storyUsdt(g, w, h){
   txt(g, "PAGAMOS", 78, 560, 100, {font:FD, weight:900});
   txt(g, "EN USDT", 78, 670, 100, {font:FD, weight:900, color:COL.gold});
   usdtCoin(g, w - 230, 560, 150);
-  const c = byId("cop") || D.corr[0], A = META[c.id].ex, q = quoteBs(c, A), u = q.bs/D.usdt;
-  g.fillStyle = COL.card; g.fill(rr(50, 780, w - 100, 420, 44));
-  txt(g, "Ejemplo de hoy", w/2, 860, 34, {color:COL.dim, align:"center"});
-  txt(g, `${fmt(A, decOf(c))} ${c.cur}`, w/2, 960, 76, {font:FM, weight:500, align:"center", max:w - 200});
-  txt(g, "tu familiar recibe", w/2, 1030, 32, {color:COL.dim, align:"center"});
-  txt(g, `${fmt(u)} USDT`, w/2, 1140, 92, {font:FM, weight:500, color:"#4FD3A5", align:"center", max:w - 200});
-  [["Binance Pay o billetera TRC20 / BEP20"], ["Mismo valor que en bolívares"], ["Ideal para ahorrar en dólares"]].forEach(([s], i) => {
-    const y = 1310 + i*90;
-    g.fillStyle = "#26A17B"; g.beginPath(); g.arc(110, y - 14, 26, 0, Math.PI*2); g.fill();
-    g.strokeStyle = "#fff"; g.lineWidth = 7; g.lineCap = "round"; g.lineJoin = "round"; g.beginPath(); g.moveTo(98, y - 14); g.lineTo(107, y - 4); g.lineTo(124, y - 26); g.stroke();
-    txt(g, s, 160, y, 40, {font:FD, weight:800, max:w - 220});
+  txt(g, "Tu familiar elige: bolívares o USDT", 78, 790, 40, {weight:700, color:COL.dim, max:w - 156});
+  g.fillStyle = COL.card; g.fill(rr(50, 870, w - 100, 560, 44));
+  [["Binance Pay o billetera", "TRC20 / BEP20"], ["Mismo valor que en Bs", "A la tasa USDT del momento"], ["Ideal para ahorrar", "En dólares digitales"]].forEach(([t, s], i) => {
+    const y = 870 + 120 + i*170;
+    if (i) { g.fillStyle = COL.line; g.fillRect(90, y - 70, w - 180, 2); }
+    g.fillStyle = "#26A17B"; g.beginPath(); g.arc(140, y, 40, 0, Math.PI*2); g.fill();
+    g.strokeStyle = "#fff"; g.lineWidth = 10; g.lineCap = "round"; g.lineJoin = "round"; g.beginPath(); g.moveTo(122, y); g.lineTo(135, y + 15); g.lineTo(160, y - 17); g.stroke();
+    txt(g, t, 215, y - 6, 48, {font:FD, weight:800, max:w - 290});
+    txt(g, s, 215, y + 42, 32, {color:COL.dim, max:w - 290});
   });
-  txt(g, "Elige «USDT» en la calculadora de la web", w/2, 1640, 32, {color:COL.dim, align:"center", max:w - 120});
+  warn(g, w/2, 1490);
+  txt(g, "Elige «USDT» en la calculadora de la web", w/2, 1660, 34, {weight:700, align:"center", max:w - 120});
   footer(g, w, h);
 }
 

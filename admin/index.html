@@ -177,8 +177,7 @@ const DEFAULTS = {
     {id:"cop", name:"Colombia", cur:"COP", unit:1000, price:3300, fee:0, pp:0, margin:4},
     {id:"pp",  name:"PayPal", cur:"USD", unit:1, price:1, fee:5, pp:0, margin:4},
     {id:"clp", name:"Chile", cur:"CLP", unit:1000, price:990, fee:3, pp:0, margin:4},
-    {id:"brl", name:"Brasil", cur:"BRL", unit:1, price:5.21, fee:0, pp:0, margin:4},
-    {id:"usd", name:"Estados Unidos", cur:"USD", unit:1, price:0.98, fee:4, pp:0, margin:4}
+    {id:"brl", name:"Brasil", cur:"BRL", unit:1, price:5.21, fee:0, pp:0, margin:4}
   ]
 };
 const $ = id => document.getElementById(id);
@@ -186,13 +185,10 @@ const fmt = (n, d=2) => Number.isFinite(n) ? n.toLocaleString("es-VE",{minimumFr
 const clone = o => JSON.parse(JSON.stringify(o));
 const FLAGS = (() => {
   const w = b => `<svg class="flg" viewBox="0 0 30 20" aria-hidden="true">${b}</svg>`;
-  let us = `<rect width="30" height="20" fill="#B22234"/>`;
-  for (let i = 1; i < 13; i += 2) us += `<rect y="${(i*20/13).toFixed(2)}" width="30" height="${(20/13).toFixed(2)}" fill="#fff"/>`;
-  us += `<rect width="12.4" height="${(7*20/13).toFixed(2)}" fill="#3C3B6E"/>`;
   return { cop: w(`<rect width="30" height="10" fill="#FCD116"/><rect y="10" width="30" height="5" fill="#003893"/><rect y="15" width="30" height="5" fill="#CE1126"/>`),
     clp: w(`<rect width="30" height="20" fill="#fff"/><rect y="10" width="30" height="10" fill="#D52B1E"/><rect width="10" height="10" fill="#0039A6"/><path d="M5 2.4l.9 2.8h2.9L6.5 6.9l.9 2.8L5 8 2.6 9.7l.9-2.8-2.4-1.7h2.9z" fill="#fff"/>`),
     brl: w(`<rect width="30" height="20" fill="#009C3B"/><path d="M15 2.4 27.4 10 15 17.6 2.6 10z" fill="#FFDF00"/><circle cx="15" cy="10" r="4.6" fill="#002776"/>`),
-    usd: w(us), pp: w(`<rect width="30" height="20" fill="#003087"/><rect x="5" y="5" width="20" height="11" rx="2" fill="#0070E0"/><rect x="5" y="7.5" width="20" height="2.2" fill="#003087"/>`) };
+    pp: w(`<rect width="30" height="20" fill="#003087"/><rect x="5" y="5" width="20" height="11" rx="2" fill="#0070E0"/><rect x="5" y="7.5" width="20" height="2.2" fill="#003087"/>`) };
 })();
 
 /* ---------- Cifrado (PBKDF2 + AES-GCM) ---------- */

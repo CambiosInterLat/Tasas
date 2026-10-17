@@ -373,6 +373,11 @@ const VIDEOS = [
   }}
 ];
 const VID_LEN = 12;
+/* Exportación cuadro a cuadro (para armar el MP4 con FFmpeg desde la PC) */
+window.__renderFrames = (v, from, n, fps = 30) => {
+  const cv = document.createElement("canvas"); cv.width = 1080; cv.height = 1920; const g = cv.getContext("2d");
+  return Array.from({length: n}, (_, k) => { VIDEOS[v].frame(g, 1080, 1920, (from + k)/fps); return cv.toDataURL("image/jpeg", 0.92); });
+};
 
 /* ---------- Interfaz ---------- */
 let tt; const toast = m => { const t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2200); };

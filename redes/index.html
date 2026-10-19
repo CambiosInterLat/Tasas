@@ -220,6 +220,23 @@ function questionStory(q, hint, extra){
     footer(g, w, h);
   };
 }
+/* Opciones dibujadas: sirven en WhatsApp y Facebook, donde no hay stickers de encuesta */
+const choices = (items, cta = "Responde esta historia con tu opción 👇") => (g, w, h, y) => {
+  const L = "ABCD", rowH = items.length > 3 ? 150 : 170, y0 = y + 90;
+  items.forEach((t, i) => {
+    const ry = y0 + i*(rowH + 24);
+    g.fillStyle = COL.card; g.fill(rr(80, ry, w - 160, rowH, 36));
+    g.fillStyle = COL.gold; g.beginPath(); g.arc(170, ry + rowH/2, 44, 0, Math.PI*2); g.fill();
+    txt(g, L[i], 170, ry + rowH/2 + 17, 48, {font:FD, weight:900, color:"#2A1D00", align:"center"});
+    txt(g, t, 250, ry + rowH/2 + 15, 44, {font:FD, weight:800, max:w - 360});
+  });
+  txt(g, cta, w/2, y0 + items.length*(rowH + 24) + 70, 36, {weight:700, color:COL.dim, align:"center", max:w - 120});
+};
+const replyHint = (t = "Respóndenos aquí mismo 👇") => (g, w, h, y) => {
+  g.fillStyle = COL.card; g.fill(rr(80, y + 120, w - 160, 260, 40));
+  txt(g, "💬", w/2, y + 245, 90, {align:"center"});
+  txt(g, t, w/2, y + 335, 38, {weight:700, color:COL.dim, align:"center", max:w - 220});
+};
 function exampleStory(id){
   return (g, w, h) => {
     const c = byId(id) || D.corr[0], A = META[c.id].ex, q = quoteBs(c, A);
@@ -296,21 +313,21 @@ const quizFor = id => {
   return {c, A, opts: order.map(i => opts[i]), right: order.indexOf(0)};
 };
 const INTERACTIVE = [
-  () => ({name:"Encuesta: país", draw: questionStory("¿Desde qué país le envías a tu familia?", "ENCUESTA"),
-    how:"Agrega el sticker <b>ENCUESTA</b> en el centro con 4 opciones: Colombia, Chile, Brasil, PayPal."}),
+  () => ({name:"Encuesta: país", draw: questionStory("¿Desde qué país le envías a tu familia?", "ENCUESTA", choices(["Colombia","Chile","Brasil","PayPal"])),
+    how:"En Instagram puedes poner encima el sticker <b>ENCUESTA</b> con 4 opciones: Colombia, Chile, Brasil, PayPal."}),
   () => { const z = quizFor(["cop","clp","brl","pp"][dayIdx % 4]); const L = "ABC";
-    return {name:"Quiz de tasas", draw: questionStory(`Si envías ${fmt(z.A, decOf(z.c))} ${META[z.c.id].long}, ¿cuántos Bs recibe tu familiar hoy?`, "QUIZ"),
-      how:`Agrega el sticker <b>QUIZ</b> con: ${z.opts.map((o,i) => `${L[i]}) ${fmt(o,0)} Bs`).join(" · ")}. Correcta: <b>${L[z.right]}</b>.`}; },
-  () => ({name:"Pregunta abierta", draw: questionStory("¿Tienes dudas para enviar a Venezuela? Pregúntanos aquí", "PREGUNTAS"),
+    return {name:"Quiz de tasas", draw: questionStory(`Si envías ${fmt(z.A, decOf(z.c))} ${META[z.c.id].long}, ¿cuántos Bs recibe tu familiar hoy?`, "QUIZ", choices(z.opts.map(o => fmt(o,0) + " Bs"), "Responde esta historia con la letra 👇")),
+      how:`En Instagram puedes poner además el sticker el sticker <b>QUIZ</b> con: ${z.opts.map((o,i) => `${L[i]}) ${fmt(o,0)} Bs`).join(" · ")}. Correcta: <b>${L[z.right]}</b>.`}; },
+  () => ({name:"Pregunta abierta", draw: questionStory("¿Tienes dudas para enviar a Venezuela? Pregúntanos aquí", "PREGUNTAS", replyHint("Escribe tu duda respondiendo esta historia")),
     how:"Agrega el sticker <b>PREGUNTAS</b>. Responde las preguntas en otra historia."}),
-  () => ({name:"Encuesta: Bs o USDT", draw: questionStory("¿Tu familiar prefiere recibir en bolívares o en USDT?", "ENCUESTA"),
-    how:"Agrega el sticker <b>ENCUESTA</b> con 2 opciones: Bolívares, USDT."}),
-  () => ({name:"Quiz de seguridad", draw: questionStory("¿Qué es lo primero que haces antes de pagar un envío?", "QUIZ"),
-    how:"Agrega el sticker <b>QUIZ</b> con: A) Pagar a la cuenta de siempre · B) Consultar la cuenta · C) Pagar y avisar después. Correcta: <b>B</b>."}),
-  () => ({name:"Deslizador", draw: questionStory("¿Qué tan rápido llegó tu último envío con nosotros?", "DESLIZA"),
+  () => ({name:"Encuesta: Bs o USDT", draw: questionStory("¿Tu familiar prefiere recibir en bolívares o en USDT?", "ENCUESTA", choices(["Bolívares","USDT"])),
+    how:"En Instagram puedes poner encima el sticker <b>ENCUESTA</b> con 2 opciones: Bolívares, USDT."}),
+  () => ({name:"Quiz de seguridad", draw: questionStory("¿Qué es lo primero que haces antes de pagar un envío?", "QUIZ", choices(["Pagar a la cuenta de siempre","Consultar la cuenta","Pagar y avisar después"], "Responde esta historia con la letra 👇")),
+    how:"En Instagram puedes poner además el sticker <b>QUIZ</b> con: A) Pagar a la cuenta de siempre · B) Consultar la cuenta · C) Pagar y avisar después. Correcta: <b>B</b>."}),
+  () => ({name:"Deslizador", draw: questionStory("¿Qué tan rápido llegó tu último envío con nosotros?", "DESLIZA", replyHint("Del 1 al 5, ¿qué tan rápido fue? ⚡")),
     how:"Agrega el sticker <b>DESLIZADOR</b> con el emoji ⚡."}),
-  () => ({name:"Encuesta: este mes", draw: questionStory("¿Ya le enviaste a tu familia este mes?", "ENCUESTA"),
-    how:"Agrega el sticker <b>ENCUESTA</b> con 2 opciones: Sí, ya envié · Todavía no."})
+  () => ({name:"Encuesta: este mes", draw: questionStory("¿Ya le enviaste a tu familia este mes?", "ENCUESTA", choices(["Sí, ya envié","Todavía no"])),
+    how:"En Instagram puedes poner encima el sticker <b>ENCUESTA</b> con 2 opciones: Sí, ya envié · Todavía no."})
 ];
 const THIRD = [
   () => ({name:"Ejemplo Colombia", draw: exampleStory("cop"), how:"Agrega el sticker <b>ENLACE</b> con la web: https://" + WEB + "/"}),
@@ -335,8 +352,8 @@ const THIRD = [
 /* Banco del feed (4:5) con texto para la publicación */
 const TAGS = "#EnviosAVenezuela #RemesasVenezuela #VenezolanosEnChile #VenezolanosEnColombia #VenezolanosEnBrasil #Venezuela #Maturin #Bolivares #InterLat";
 const FEED = [
-  () => ({name:"Tasas del día", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60); txt(g, "TASAS DEL DÍA", 78, 290, 76, {font:FD, weight:900}); txt(g, dateCap, 78, 340, 32, {weight:700, color:COL.gold});
-      const end = rateCard(g, 50, 380, w - 100, 172); warn(g, w/2, end + 30); footer(g, w, h); },
+  () => ({name:"Tasas del día", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60); txt(g, "TASAS DEL DÍA", 78, 268, 76, {font:FD, weight:900}); txt(g, dateCap, 78, 316, 32, {weight:700, color:COL.gold});
+      const end = rateCard(g, 50, 346, w - 100, 160); warn(g, w/2, end + 20); footer(g, w, h); },
     cap:`Tasas del día ${dateTxt} 🇻🇪\n\n${D.corr.map(c => `${META[c.id].name}: ${unitTxt(c)} = ${fmt(c.rate*c.unit)} Bs`).join("\n")}\n\nDesde ${fmt(D.tierMin,0)} $ tienes tasa preferencial.\n⚠️ Siempre consulta la cuenta antes de pagar.\n📲 WhatsApp ${WA}\n🧮 Calcula tu envío: link en la bio\n\n${TAGS}`}),
   () => ({name:"Cómo enviar", draw: (g, w, h) => { bg(g, w, h); header(g, w, 60); txt(g, "ENVÍA EN 3 PASOS", 78, 300, 74, {font:FD, weight:900, max:w - 156}); stepsArt(g, w, 470, 200); warn(g, w/2, 1090); footer(g, w, h); },
     cap:`Enviar dinero a Venezuela es así de fácil 👇\n\n1️⃣ Calcula en nuestra web cuánto recibe tu familiar.\n2️⃣ Escríbenos por WhatsApp y te enviamos la cuenta del día.\n3️⃣ Paga, envía el comprobante y tu familiar recibe sus bolívares.\n\n⚠️ Siempre consulta la cuenta antes de pagar.\n📲 ${WA}\n\n${TAGS}`}),
